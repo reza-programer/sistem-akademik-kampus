@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* Global Theme Variables */
+@layer base {
+  :root {
+    --bg-main: 248 250 252;
+    /* slate-50 */
+    --text-main: 30 41 59;
+    /* slate-800 */
+    --card-bg: 255 255 255;
+    /* white */
+    --border-main: 241 245 249;
+    /* slate-100 */
+  }
+
+  .dark {
+    --bg-main: 15 23 42;
+    /* slate-900 */
+    --text-main: 248 250 252;
+    /* slate-50 */
+    --card-bg: 30 41 59;
+    /* slate-800 */
+    --border-main: 51 65 85;
+    /* slate-700 */
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-lg border shadow-lg;
+    background-color: rgba(var(--card-bg) / 0.7);
+    border-color: rgba(var(--border-main) / 0.3);
+  }
+
+  .theme-bg {
+    background-color: rgb(var(--bg-main));
+  }
+
+  .theme-text {
+    color: rgb(var(--text-main));
+  }
+
+  .theme-card {
+    background-color: rgb(var(--card-bg));
+    border-color: rgb(var(--border-main));
+  }
+}
+
+body {
+  @apply font-sans transition-colors duration-300;
+  background-color: rgb(var(--bg-main));
+  color: rgb(var(--text-main));
+}
