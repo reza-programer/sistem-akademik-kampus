@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 export const usePresensiStore = defineStore('presensi', {
     state: () => ({
-        // Daftar nama mahasiswa di kelas dummy (SINFC-2026-01)
+        // Daftar nama mahasiswa di kelas dummy (SI 2026 01)
         students: [
             { nim: '20260001', nama: 'Andi Wijaya' },
             { nim: '20260002', nama: 'Budi Santoso' },

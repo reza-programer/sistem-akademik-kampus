@@ -1,49 +1,20 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+
+const API_URL = 'http://localhost:5000/api'
 
 export const useTugasStore = defineStore('tugas', {
     state: () => ({
-        tugasList: [
-            {
-                id: 1,
-                matkul: 'Sistem Operasi',
-                kelas: 'SINFC-2026-01',
-                judul: 'Tugas 1: Manajemen Memori',
-                deskripsi: 'Buatlah makalah minimal 5 halaman menjelaskan konsep paging dan segmentation.',
-                deadline: '2026-04-15T23:59:00',
-                createdAt: '2026-03-01T10:00:00',
-                dosenId: 2,
-                fileUrl: null
-            },
-            {
-                id: 2,
-                matkul: 'Pemrograman Web 1',
-                kelas: 'SINFC-2026-01',
-                judul: 'Tugas 2: Desain HTML Dasar',
-                deskripsi: 'Buat halaman profile menggunakan HTML dan CSS murni.',
-                deadline: '2026-04-10T23:59:00',
-                createdAt: '2026-03-05T08:00:00',
-                dosenId: 2,
-                fileUrl: null
-            }
-        ],
-        submisiList: [
-            {
-                id: 1,
-                tugasId: 1,
-                nim: '20260001',
-                waktuSubmit: '2026-04-10T14:30:00',
-                catatan: 'Ini tugas saya pak. Terima kasih.',
-                fileName: 'Tugas1_AhmadFauzi_OS.pdf',
-                fileDataUrl: null, // base64 pdf dummy if any
-                nilai: null,
-                feedbackDosen: null
-            }
-        ]
+        tugasList: [],
+        submisiList: [],
+        isLoading: false,
+        error: null
     }),
     getters: {
+        getTugasByDosen: (state) => (dosenId) => state.tugasList.filter(t => t.dosenId === dosenId),
         getTugasByKelas: (state) => (kelas) => state.tugasList.filter(t => t.kelas === kelas),
-        getSubmisiByTugas: (state) => (tugasId) => state.submisiList.filter(s => s.tugasId === tugasId),
-        getSubmisiByNimTugas: (state) => (nim, tugasId) => state.submisiList.find(s => s.nim === nim && s.tugasId === tugasId),
+        getSubmisiByTugas: (state) => (tugasId) => state.submisiList.filter(s => s.tugasId === parseInt(tugasId)),
+        getSubmisiByNimTugas: (state) => (nim, tugasId) => state.submisiList.find(s => s.nim === nim && s.tugasId === parseInt(tugasId)),
         getDaftarMatkulDosen: (state) => {
             const matkul = new Set()
             state.tugasList.forEach(t => matkul.add(t.matkul))
@@ -51,35 +22,73 @@ export const useTugasStore = defineStore('tugas', {
         }
     },
     actions: {
-        addTugas(tugas) {
-            this.tugasList.push({
-                ...tugas,
-                id: this.tugasList.length + 1,
-                createdAt: new Date().toISOString()
-            })
-        },
-        submitAssignment(submisiInfo) {
-            const existingIndex = this.submisiList.findIndex(s => s.tugasId === submisiInfo.tugasId && s.nim === submisiInfo.nim)
-
-            const payload = {
-                ...submisiInfo,
-                id: existingIndex >= 0 ? this.submisiList[existingIndex].id : this.submisiList.length + 1,
-                waktuSubmit: new Date().toISOString(),
-                nilai: null,
-                feedbackDosen: null
-            }
-
-            if (existingIndex >= 0) {
-                this.submisiList[existingIndex] = payload
-            } else {
-                this.submisiList.push(payload)
+        async fetchTugas() {
+            this.isLoading = true
+            try {
+                const response = await axios.get(`${API_URL}/tugas`)
+                this.tugasList = response.data
+            } catch (err) {
+                this.error = 'Gagal memuat daftar tugas'
+                console.error(err)
+            } finally {
+                this.isLoading = false
             }
         },
-        gradeSubmission(submisiId, nilai, feedback) {
-            const sumbisi = this.submisiList.find(s => s.id === submisiId)
-            if (sumbisi) {
-                sumbisi.nilai = nilai
-                sumbisi.feedbackDosen = feedback
+        async addTugas(tugas) {
+            try {
+                const response = await axios.post(`${API_URL}/tugas`, tugas)
+                this.tugasList.unshift(response.data)
+                return response.data
+            } catch (err) {
+                console.error('Gagal menambah tugas:', err)
+                throw err
+            }
+        },
+        async hapusTugas(id) {
+            try {
+                await axios.delete(`${API_URL}/tugas/${id}`)
+                this.tugasList = this.tugasList.filter(t => t.id !== id)
+                this.submisiList = this.submisiList.filter(s => s.tugasId !== id)
+            } catch (err) {
+                console.error('Gagal menghapus tugas:', err)
+                throw err
+            }
+        },
+        async fetchSubmisi(tugasId) {
+            try {
+                const response = await axios.get(`${API_URL}/submisi/${tugasId}`)
+                // Update submisiList with new data for this tugas, avoiding duplicates if any
+                const otherSubmisi = this.submisiList.filter(s => s.tugasId !== parseInt(tugasId))
+                this.submisiList = [...otherSubmisi, ...response.data]
+            } catch (err) {
+                console.error('Gagal memuat submisi:', err)
+            }
+        },
+        async submitAssignment(submisiInfo) {
+            try {
+                const response = await axios.post(`${API_URL}/submisi`, submisiInfo)
+                // Filter out old submission if it exists
+                this.submisiList = this.submisiList.filter(s => !(s.tugasId === submisiInfo.tugasId && s.nim === submisiInfo.nim))
+                this.submisiList.push(response.data)
+                return response.data
+            } catch (err) {
+                console.error('Gagal mengirim submisi:', err)
+                throw err
+            }
+        },
+        async gradeSubmission(submisiId, nilai, feedback) {
+            // Placeholder: Backend doesn't have grade route yet, but we'll add it if needed
+            // For now, let's just update local state if we don't implement the route
+            try {
+                // If we had a PATCH route:
+                // await axios.patch(`${API_URL}/submisi/${submisiId}`, { nilai, feedbackDosen: feedback })
+                const idx = this.submisiList.findIndex(s => s.id === submisiId)
+                if (idx !== -1) {
+                    this.submisiList[idx] = { ...this.submisiList[idx], nilai, feedbackDosen: feedback || null }
+                    this.submisiList = [...this.submisiList]
+                }
+            } catch (err) {
+                console.error('Gagal memberi nilai:', err)
             }
         }
     }

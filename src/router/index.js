@@ -8,9 +8,21 @@ const routes = [
         meta: { layout: 'auth' }
     },
     {
+        path: '/login-staff',
+        name: 'LoginStaff',
+        component: () => import('@/views/auth/LoginStaffView.vue'),
+        meta: { layout: 'auth' }
+    },
+    {
         path: '/register',
         name: 'Register',
         component: () => import('@/views/auth/RegistrasiView.vue'),
+        meta: { layout: 'auth' }
+    },
+    {
+        path: '/forgot-password',
+        name: 'ForgotPassword',
+        component: () => import('@/views/auth/ForgotPasswordView.vue'),
         meta: { layout: 'auth' }
     },
     {

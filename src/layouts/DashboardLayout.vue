@@ -1,7 +1,46 @@
 <template>
   <div class="min-h-screen bg-slate-50 flex">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+    <!-- Mobile Sidebar Overlay -->
+    <transition name="sidebar-backdrop">
+      <div v-if="isMobileSidebarOpen" class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="isMobileSidebarOpen = false"></div>
+    </transition>
+    <transition name="sidebar-slide">
+      <aside v-if="isMobileSidebarOpen" class="fixed inset-y-0 left-0 w-72 bg-slate-900 text-white flex flex-col z-50 md:hidden shadow-2xl">
+        <div class="h-16 flex items-center justify-between px-4 border-b border-white border-opacity-10">
+          <span class="font-bold text-xl">SIAKAD 🎓</span>
+          <button @click="isMobileSidebarOpen = false" class="text-white/70 hover:text-white p-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+          <router-link
+            v-for="menu in menus"
+            :key="menu.path"
+            :to="menu.path"
+            @click="isMobileSidebarOpen = false"
+            class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 justify-between group"
+            :class="$route.path === menu.path ? 'bg-primary-600 text-white shadow-md shadow-primary-900/20' : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
+          >
+            <div class="flex items-center space-x-3 font-medium">
+              <component :is="menu.icon" class="w-5 h-5" :class="$route.path === menu.path ? 'text-white' : 'text-slate-400 group-hover:text-primary-400'" />
+              <span>{{ menu.name }}</span>
+            </div>
+            <span v-if="menu.badge && menu.badge() > 0" class="px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold shadow-sm">{{ menu.badge() }}</span>
+          </router-link>
+        </nav>
+        <div class="p-4 border-t border-white border-opacity-10">
+          <div class="text-sm text-slate-400 mb-2">Login sebagai:</div>
+          <div class="font-medium truncate">{{ authStore.user?.name }}</div>
+          <div class="text-sm truncate opacity-70 mb-4">{{ authStore.role.toUpperCase() }}</div>
+          <button @click="handleLogout" class="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-red-500 hover:bg-red-600 rounded-lg transition">
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+    </transition>
+
+    <!-- Desktop Sidebar -->
+    <aside class="w-64 bg-slate-900 text-white flex-col hidden md:flex">
       <div class="h-16 flex items-center justify-center font-bold text-xl border-b border-white border-opacity-10">
         SIAKAD 🎓
       </div>
@@ -67,7 +106,7 @@
 
             <!-- Notification Dropdown -->
             <transition enter-active-class="transition ease-out duration-200" enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100" leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
-              <div v-show="isNotifOpen" class="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
+              <div v-show="isNotifOpen" class="fixed left-3 right-3 top-16 md:absolute md:left-auto md:right-0 md:top-auto mt-2 md:w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg py-1 z-50 ring-1 ring-black ring-opacity-5">
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center">
                   <h3 class="text-sm border-gray-100 font-semibold theme-text">Notifikasi</h3>
                   <button @click="notificationStore.markAllAsRead" class="text-xs text-primary-600 hover:text-primary-800 dark:text-primary-400 font-medium">Tandai sudah dibaca</button>
@@ -125,15 +164,42 @@
       </header>
 
       <!-- Page Content -->
-      <main class="flex-1 overflow-auto p-6 theme-bg">
+      <main class="flex-1 overflow-auto p-4 md:p-6 pb-24 md:pb-6 theme-bg">
         <slot />
       </main>
+
+      <!-- Mobile Bottom Navigation -->
+      <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 md:hidden z-30 shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+        <div class="flex items-center justify-around h-16 px-1">
+          <router-link
+            v-for="item in mobileNavItems"
+            :key="item.path"
+            :to="item.path"
+            class="flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg transition-all duration-200 relative"
+            :class="$route.path === item.path ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            <component :is="item.icon" class="w-5 h-5 mb-0.5" />
+            <span class="text-[10px] font-medium leading-tight text-center w-full truncate">{{ item.name }}</span>
+            <span v-if="item.badge && item.badge() > 0" class="absolute top-0 right-1/4 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white font-bold" style="font-size: 9px;">{{ item.badge() }}</span>
+          </router-link>
+          <!-- More button -->
+          <button
+            @click="isMobileSidebarOpen = true"
+            class="flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-lg transition-all duration-200 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <span class="text-[10px] font-medium leading-tight">Lainnya</span>
+          </button>
+        </div>
+      </nav>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+
+const isMobileSidebarOpen = ref(false)
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
@@ -248,4 +314,32 @@ const menus = computed(() => {
   }
   return []
 })
+
+// Mobile bottom nav: show first 4 menu items
+const mobileNavItems = computed(() => {
+  return menus.value.slice(0, 4)
+})
 </script>
+
+<style scoped>
+/* Mobile Sidebar Transitions */
+.sidebar-backdrop-enter-active,
+.sidebar-backdrop-leave-active {
+  transition: opacity 0.3s ease;
+}
+.sidebar-backdrop-enter-from,
+.sidebar-backdrop-leave-to {
+  opacity: 0;
+}
+
+.sidebar-slide-enter-active {
+  transition: transform 0.3s ease;
+}
+.sidebar-slide-leave-active {
+  transition: transform 0.25s ease;
+}
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
+  transform: translateX(-100%);
+}
+</style>

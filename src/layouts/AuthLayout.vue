@@ -1,34 +1,40 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center p-4">
-    <!-- Ornamen dekoratif blur -->
-    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-primary-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+  <div class="flex flex-col min-h-screen bg-white font-sans">
     
-    <div class="w-full max-w-md relative z-10 glass rounded-2xl p-8">
-      <div class="text-center mb-8">
-        <div class="h-16 w-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-          <span class="text-white text-2xl font-bold">🎓</span>
-        </div>
-        <h1 class="text-2xl font-bold text-slate-800">Sistem Akademik</h1>
-        <p class="text-slate-500 mt-2">Login untuk mengakses layanan</p>
+    <!-- Simplified Topbar -->
+    <header class="bg-white border-b border-slate-100 py-4 px-6 md:px-10 flex items-center sticky top-0 z-30">
+      <div class="mr-4">
+         <img src="/unikuuuu.jpg" alt="Logo Uniku" class="h-10 w-auto rounded-full shadow-sm" />
       </div>
+      <div>
+        <h1 class="text-lg md:text-xl font-black tracking-tight text-slate-800 m-0 leading-tight">UNIVERSITAS KUNINGAN</h1>
+        <p class="text-primary-600 font-bold text-[9px] md:text-xs tracking-wider uppercase m-0 mt-0.5">Studentsite Portal</p>
+      </div>
+    </header>
 
-      <slot />
-    </div>
+    <!-- Content Area -->
+    <main class="flex-grow flex items-center justify-center bg-slate-50/50 p-6">
+      <div class="w-full max-w-[440px] animate-fade-in">
+        <slot />
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-6 px-4 text-center">
+      <p class="text-[11px] text-slate-400 font-medium">
+        &copy; 2026 Universitas Kuningan &bull; Sistem Informasi Akademik
+      </p>
+    </footer>
+
   </div>
 </template>
 
-<style>
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+<style scoped>
+.animate-fade-in {
+   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.animate-blob {
-  animation: blob 7s infinite;
-}
-.animation-delay-2000 {
-  animation-delay: 2s;
+@keyframes fadeIn {
+   from { opacity: 0; transform: translateY(10px); }
+   to { opacity: 1; transform: translateY(0); }
 }
 </style>

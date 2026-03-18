@@ -10,8 +10,8 @@
       <div class="w-full md:w-1/3">
          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Pilih Mata Kuliah & Kelas</label>
          <select v-model="form.matkul" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded text-sm outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-            <option value="Struktur Data">Struktur Data - SINFC-2026-01</option>
-            <option value="Pemrograman Web Lanjut">Pemrograman Web Lanjut - SINFC-2026-01</option>
+            <option value="Struktur Data">Struktur Data - SI 2026 01</option>
+            <option value="Pemrograman Web Lanjut">Pemrograman Web Lanjut - SI 2026 01</option>
          </select>
       </div>
       <div class="w-full md:w-1/4">

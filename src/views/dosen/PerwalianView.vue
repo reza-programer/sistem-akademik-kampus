@@ -133,15 +133,22 @@
 import { ref, computed } from 'vue'
 import Swal from 'sweetalert2'
 import { useKrsStore } from '@/stores/krs'
+import { useAuthStore } from '@/stores/auth'
 
 const krsStore = useKrsStore()
+const authStore = useAuthStore()
 const filterStatus = ref('all')
 const isModalOpen = ref(false)
 const selectedDataModal = ref(null)
 
 const getStudentName = (nim) => {
+   // Cek mahasiswa dari database lokal
+   const mhs = authStore.mahasiswaDB.find(m => m.username === nim)
+   if (mhs) return mhs.user.name
+   
+   // Fallback dummy
    if(nim === '20260001') return 'Andi Wijaya'
-   return `Mahasiswa Dummy ${parseInt(nim.slice(-4))}`
+   return `Mahasiswa Dummy ${parseInt((nim || '0000').slice(-4))}`
 }
 
 const getTotalSks = (matkulArray) => {

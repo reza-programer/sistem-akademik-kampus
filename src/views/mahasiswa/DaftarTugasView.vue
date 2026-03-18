@@ -37,7 +37,7 @@
              <span class="text-[10px] font-bold tracking-widest uppercase border border-primary-500 text-primary-700 px-2 py-0.5 rounded-full mb-3 inline-block">
                 {{ tugas.matkul }}
              </span>
-             <h3 class="font-bold text-lg leading-snug theme-text group-hover:text-primary-600 transition">{{ tugas.topik }}</h3>
+             <h3 class="font-bold text-lg leading-snug theme-text group-hover:text-primary-600 transition">{{ tugas.judul }}</h3>
              <p class="text-xs opacity-70 mt-2 mb-4 line-clamp-3 leading-relaxed">{{ tugas.deskripsi }}</p>
 
              <div class="p-3 bg-slate-50 dark:bg-slate-900 border theme-border rounded-xl space-y-2 text-xs">
@@ -47,7 +47,7 @@
                 </div>
                 <div class="flex justify-between items-center theme-text">
                    <span class="opacity-70">Tipe Berkas:</span>
-                   <span class="font-mono text-[10px]">{{ tugas.tipeFormat }}</span>
+                   <span class="font-mono text-[10px]">.pdf</span>
                 </div>
              </div>
 
@@ -57,10 +57,10 @@
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Sudah Disubmit
                  </p>
-                 <p class="text-[10px] truncate text-slate-500">Berkas: {{ statusSubmisi(tugas.id)?.fileUrl }}</p>
-                 <div class="mt-2 text-xs font-bold pt-2 border-t border-emerald-200 dark:border-emerald-800">
-                    NILAI: <span class="text-lg" :class="statusSubmisi(tugas.id)?.nilai ? 'text-emerald-600' : 'text-slate-400'">{{ statusSubmisi(tugas.id)?.nilai || 'Belum dinilai dosen' }}</span>
-                 </div>
+                 <p class="text-[10px] truncate text-slate-500">Berkas: {{ statusSubmisi(tugas.id)?.fileName }}</p>
+                  <div class="mt-2 text-xs font-bold pt-2 border-t border-emerald-200 dark:border-emerald-800">
+                     NILAI: <span class="text-lg" :class="statusSubmisi(tugas.id)?.nilai !== null && statusSubmisi(tugas.id)?.nilai !== undefined ? 'text-emerald-600 font-extrabold' : 'text-slate-400'">{{ statusSubmisi(tugas.id)?.nilai !== null && statusSubmisi(tugas.id)?.nilai !== undefined ? statusSubmisi(tugas.id)?.nilai : 'Belum dinilai dosen' }}</span>
+                  </div>
              </div>
 
           </div>
@@ -82,19 +82,21 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useTugasStore } from '@/stores/tugas'
+import { useAuthStore } from '@/stores/auth'
 import Swal from 'sweetalert2'
 
 const tugasStore = useTugasStore()
-const mahasiswaDummyNIM = '20260001'
+const authStore = useAuthStore()
 const tabTarget = ref('To-Do') // 'To-Do' | 'Selesai'
 
-// Asumsi mahasiswa ini ada di kelas TI-4A
+// Ambil riwayat tugas berdasarkan kelas user login
 const semuaTugas = computed(() => {
-   return tugasStore.getAssignmentsForMahasiswa('TI-4A')
+   return tugasStore.getTugasByKelas(authStore.user?.idKelas || 'Belum Ada Kelas')
 })
 
 const statusSubmisi = (tugasId) => {
-   return tugasStore.getSubmissionStatus(tugasId, mahasiswaDummyNIM)
+   const d = tugasStore.getSubmisiByNimTugas(authStore.user?.nim, tugasId)
+   return d ? d : null
 }
 
 // Pisahkan antara yang udah disubmit dan belum
@@ -131,7 +133,7 @@ const bukaModalUpload = (tugas) => {
          <div class="text-left mt-2">
             <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-4">
                <span class="text-xs uppercase font-bold text-blue-800">${tugas.matkul}</span>
-               <h3 class="text-lg font-bold text-slate-800 leading-tight mt-1">${tugas.topik}</h3>
+               <h3 class="text-lg font-bold text-slate-800 leading-tight mt-1">${tugas.judul}</h3>
             </div>
             
             <p class="text-sm text-slate-600 mb-4 whitespace-pre-wrap">${tugas.deskripsi}</p>
@@ -142,8 +144,8 @@ const bukaModalUpload = (tugas) => {
                <svg class="w-8 h-8 mx-auto text-slate-400 mb-2 group-hover:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                <input type="file" id="swal-file" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer text-sm">
                <p class="font-bold text-slate-700 pointer-events-none mb-1">Klik atau seret file PDF Anda ke sini</p>
-               <p class="pointer-events-none text-blue-600 font-semibold" id="swal-file-name">${currentSb ? currentSb.fileUrl : 'Belum ada file dipilih'}</p>
-               <p class="opacity-50 pointer-events-none mt-2">Dipebolehkan: ${tugas.tipeFormat}</p>
+               <p class="pointer-events-none text-blue-600 font-semibold" id="swal-file-name">${currentSb ? currentSb.fileName : 'Belum ada file dipilih'}</p>
+               <p class="opacity-50 pointer-events-none mt-2">Diperbolehkan: .pdf</p>
             </div>
          </div>
       `,
@@ -161,7 +163,7 @@ const bukaModalUpload = (tugas) => {
                nameDisplay.classList.add('text-emerald-600');
                nameDisplay.classList.remove('text-blue-600');
             } else {
-               nameDisplay.textContent = currentSb ? currentSb.fileUrl : 'Belum ada file dipilih';
+               nameDisplay.textContent = currentSb ? currentSb.fileName : 'Belum ada file dipilih';
             }
          });
       },
@@ -175,22 +177,38 @@ const bukaModalUpload = (tugas) => {
             return false
          }
 
-         // Kalo ada file, kita render sebagai URL, dan update fileName
+         // Kalo ada file baru, convert ke Base64 agar bisa dibaca dosen lintas sesi
          if(file) {
-            return {
-               name: file.name,
-               url: URL.createObjectURL(file) // Simulasi Frontend URL Blob untuk bisa didownload Dosen
-            }
+            return new Promise((resolve, reject) => {
+               const reader = new FileReader()
+               reader.onload = (e) => {
+                  resolve({
+                     name: file.name,
+                     url: e.target.result // Base64 data URL — permanen, bisa dibaca siapapun
+                  })
+               }
+               reader.onerror = () => {
+                  Swal.showValidationMessage('Gagal membaca file. Coba lagi.')
+                  reject()
+               }
+               reader.readAsDataURL(file)
+            })
          }
          
          return {
-            name: currentSb.fileUrl,
+            name: currentSb.fileName,
             url: currentSb.fileDataUrl
          }
       }
    }).then((res) => {
       if(res.isConfirmed) {
-         tugasStore.submitAssignment(tugas.id, mahasiswaDummyNIM, res.value)
+         tugasStore.submitAssignment({
+            tugasId: tugas.id,
+            nim: authStore.user?.nim,
+            fileName: res.value.name,
+            fileDataUrl: res.value.url,
+            catatan: 'Disubmit dari Portal Mahasiswa'
+         })
          Swal.fire({
             icon: 'success',
             title: 'Berhasil Dikumpulkan!',

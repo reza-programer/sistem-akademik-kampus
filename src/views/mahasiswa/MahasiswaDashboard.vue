@@ -65,12 +65,12 @@
             <div class="grid grid-cols-[140px_10px_1fr] text-sm">
                 <div class="text-slate-600">Semester Terakhir</div>
                 <div>:</div>
-                <div class="font-medium text-slate-800">{{ authStore.user?.nim === '20260001' ? '1' : '3' }}</div>
+                <div class="font-medium text-slate-800">{{ authStore.user?.semester || 1 }}</div>
             </div>
             <div class="grid grid-cols-[140px_10px_1fr] text-sm">
                 <div class="text-slate-600">Kelas</div>
                 <div>:</div>
-                <div class="font-medium text-slate-800">SINFC-2026-01</div>
+                <div class="font-medium text-slate-800">{{ authStore.user?.idKelas || 'Belum Ada Kelas' }}</div>
             </div>
          </div>
       </div>
@@ -82,7 +82,7 @@
          </div>
 
          <div class="relative z-10 flex flex-col h-full justify-center">
-            <p class="text-xs mb-1 uppercase tracking-wider text-white/80">Tahun Akademik saat ini : Genap 2025/2026</p>
+            <p class="text-xs mb-1 uppercase tracking-wider text-white/80">Tahun Akademik saat ini : Ganjil 2026/2027</p>
             <h2 class="text-3xl font-bold mb-2">Aktif</h2>
             <div class="text-lg font-bold mb-4">IPK LOKAL (DARI KRS) : {{ hitungIpk() }}</div>
             
@@ -117,24 +117,14 @@
               <th scope="col" class="px-6 py-3 font-medium text-center">Prioritas</th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-3 border-r border-slate-200" nowrap>2026 - Ganjil</td>
-              <td class="px-6 py-3 border-r border-slate-200 uppercase" nowrap>Uang Kuliah Tunggal (UKT) / SPP</td>
-              <td class="px-6 py-3 border-r border-slate-200 text-right">3,500,000</td>
-              <td class="px-6 py-3 border-r border-slate-200 text-right">3,500,000</td>
-              <td class="px-6 py-3 border-r border-slate-200 text-right">0</td>
-              <td class="px-6 py-3 border-r border-slate-200 font-bold text-slate-800">VALID</td>
-              <td class="px-6 py-3 text-center">1</td>
-            </tr>
-            <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-3 border-r border-slate-200" nowrap>2026 - Genap</td>
-              <td class="px-6 py-3 border-r border-slate-200 uppercase" nowrap>Pembelian Buku Perpustakaan</td>
-              <td class="px-6 py-3 border-r border-slate-200 text-right">200,000</td>
-              <td class="px-6 py-3 border-r border-slate-200 text-right">200,000</td>
-              <td class="px-6 py-3 border-r border-slate-200 text-right">0</td>
-              <td class="px-6 py-3 border-r border-slate-200 font-bold text-slate-800">VALID</td>
-              <td class="px-6 py-3 text-center">24</td>
+          <tbody class="text-slate-500 text-xs">
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center bg-white border-b border-slate-200">
+                 <div class="flex flex-col items-center justify-center">
+                    <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Belum ada data validasi pembayaran akademik
+                 </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -142,18 +132,22 @@
     </div>
     
     <!-- Rekap Jumlah Biaya -->
-    <div class="mt-4 flex flex-col items-end space-y-2 text-sm text-slate-800">
-       <div class="flex items-center">
-          <span class="font-bold mr-4 text-xs md:text-sm">Jumlah Biaya Studi yang harus dibayarkan :</span>
-          <span class="bg-slate-700 text-white px-3 py-1.5 font-bold w-12 text-center border-r border-slate-600">Rp</span>
-          <span class="border border-slate-300 px-4 py-1.5 w-32 md:w-40 font-mono">0,-</span>
-       </div>
-       <div class="flex items-center">
-          <span class="font-bold mr-4 text-xs md:text-sm">Sisa Uang yang masih ada di Kas Universitas Kuningan :</span>
-          <span class="bg-slate-700 text-white px-3 py-1.5 font-bold w-12 text-center border-r border-slate-600">Rp</span>
-          <span class="border border-slate-300 px-4 py-1.5 w-32 md:w-40 font-mono">0,-</span>
-       </div>
-    </div>
+     <div class="mt-4 flex flex-col items-stretch md:items-end space-y-3 text-sm text-slate-800">
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-0">
+           <span class="font-bold md:mr-4 text-xs md:text-sm">Jumlah Biaya Studi yang harus dibayarkan :</span>
+           <div class="flex items-center flex-shrink-0">
+              <span class="bg-slate-700 text-white px-3 py-1.5 font-bold w-12 text-center border-r border-slate-600 whitespace-nowrap">Rp</span>
+              <span class="border border-slate-300 px-4 py-1.5 flex-1 md:w-40 font-mono whitespace-nowrap">0,-</span>
+           </div>
+        </div>
+        <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-0">
+           <span class="font-bold md:mr-4 text-xs md:text-sm">Sisa Uang yang masih ada di Kas Universitas Kuningan :</span>
+           <div class="flex items-center flex-shrink-0">
+              <span class="bg-slate-700 text-white px-3 py-1.5 font-bold w-12 text-center border-r border-slate-600 whitespace-nowrap">Rp</span>
+              <span class="border border-slate-300 px-4 py-1.5 flex-1 md:w-40 font-mono whitespace-nowrap">0,-</span>
+           </div>
+        </div>
+     </div>
 
     <!-- Tabel History Pembayaran -->
     <div class="mt-8">
@@ -169,41 +163,14 @@
               <th scope="col" class="px-6 py-3 font-medium">Ket</th>
             </tr>
           </thead>
-          <tbody class="text-xs">
-            <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center font-medium" nowrap>19-05-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-right font-mono" nowrap>2,500,000</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center" nowrap>19-05-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 font-bold text-slate-700 text-right">VA</td>
-              <td class="px-6 py-2.5 font-medium uppercase text-slate-700">API Gateway</td>
-            </tr>
-             <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center font-medium" nowrap>15-05-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-right font-mono" nowrap>500,000</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center" nowrap>15-05-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 font-bold text-slate-700 text-right">VA</td>
-              <td class="px-6 py-2.5 font-medium uppercase text-slate-700">API Gateway</td>
-            </tr>
-             <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center font-medium" nowrap>25-03-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-right font-mono" nowrap>800,000</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center" nowrap>25-03-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 font-bold text-slate-700 text-right">VA</td>
-              <td class="px-6 py-2.5 font-medium uppercase text-slate-700">API Gateway</td>
-            </tr>
-             <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center font-medium" nowrap>15-02-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-right font-mono" nowrap>1,350,000</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center" nowrap>15-02-2025</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 font-bold text-slate-700 text-right">VA</td>
-              <td class="px-6 py-2.5 font-medium uppercase text-slate-700">API Gateway</td>
-            </tr>
-             <tr class="bg-white border-b border-slate-200 hover:bg-slate-50 transition">
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center font-medium" nowrap>07-12-2024</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-right font-mono" nowrap>845,000</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 text-center" nowrap>07-12-2024</td>
-              <td class="px-6 py-2.5 border-r border-slate-200 font-bold text-slate-700 text-right">VA</td>
-              <td class="px-6 py-2.5 font-medium uppercase text-slate-700">API Gateway</td>
+          <tbody class="text-slate-500 text-xs">
+            <tr>
+              <td colspan="5" class="px-6 py-8 text-center bg-white border-b border-slate-200">
+                 <div class="flex flex-col items-center justify-center">
+                    <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Riwayat Pembayaran kosong
+                 </div>
+              </td>
             </tr>
           </tbody>
         </table>

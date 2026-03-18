@@ -7,9 +7,9 @@
     </div>
 
     <!-- Alert / Notifikasi -->
-    <div class="bg-amber-50 border border-amber-200 text-amber-700 rounded-sm p-4 text-sm font-medium shadow-sm flex items-start gap-3">
+    <div class="bg-amber-50 border border-amber-200 text-amber-700 rounded-sm p-4 text-sm font-medium shadow-sm flex items-start gap-3" v-if="pendingCount > 0">
        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-       Ada <strong>3 Mahasiswa Bimbingan</strong> yang sedang menunggu persetujuan KRS. Silakan periksa di <router-link to="/dosen/perwalian" class="underline hover:text-amber-800">Menu Perwalian</router-link>.
+       Ada <strong>{{ pendingCount }} Mahasiswa Bimbingan</strong> yang sedang menunggu persetujuan KRS. Silakan periksa di <router-link to="/dosen/perwalian" class="underline hover:text-amber-800">Menu Perwalian</router-link>.
     </div>
 
     <!-- Profil Dosen & Summary -->
@@ -27,23 +27,27 @@
             <div class="grid grid-cols-[140px_10px_1fr] text-sm md:text-base mb-4 lg:mb-2 border-b border-slate-100 pb-2">
                 <div class="font-bold text-slate-700 tracking-widest text-sm relative top-0.5">NIDN / Username</div>
                 <div class="font-bold text-sm text-slate-700">:</div>
-                <div class="font-bold text-lg md:text-xl text-slate-800 tracking-tight">{{ authStore.user?.username || 'dosen' }}</div>
+                <div class="font-bold text-lg md:text-xl text-slate-800 tracking-tight">{{ dosenProfile?.nidn || authStore.user?.username || '0411122201' }}</div>
             </div>
             
             <div class="grid grid-cols-[140px_10px_1fr] text-sm">
                 <div class="text-slate-600">Nama Lengkap</div>
                 <div>:</div>
-                <div class="font-bold text-slate-800 uppercase">{{ authStore.user?.name || 'Dr. Wahyu Setiawan, S.T., M.Kom.' }}</div>
+                <div class="font-bold text-slate-800 uppercase">{{ dosenProfile?.nama || authStore.user?.name || 'Budi Santoso, M.Kom' }}</div>
             </div>
             <div class="grid grid-cols-[140px_10px_1fr] text-sm">
-                <div class="text-slate-600">Jabatan Fungsional</div>
+                <div class="text-slate-600">Keahlian Utama</div>
                 <div>:</div>
-                <div class="font-medium text-slate-800">Lektor Kepala</div>
+                <div class="font-medium text-slate-800">{{ dosenProfile?.keahlian || '-' }}</div>
             </div>
             <div class="grid grid-cols-[140px_10px_1fr] text-sm mt-3 pt-3 border-t border-slate-100">
                 <div class="text-slate-600">Beban Mengajar</div>
                 <div>:</div>
-                <div class="font-bold text-slate-800"><span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-200 rounded text-xs mr-2">Normal</span> 12 SKS (Semester Genap)</div>
+                <div class="font-bold text-slate-800">
+                   <span v-if="totalSksMengajar > 0" class="text-emerald-600 bg-emerald-50 px-2 py-0.5 border border-emerald-200 rounded text-xs mr-2">Cukup</span>
+                   <span v-else class="text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-200 rounded text-xs mr-2">Kosong</span>
+                   {{ totalSksMengajar }} SKS (Semester Ganjil)
+                </div>
             </div>
          </div>
       </div>
@@ -56,8 +60,8 @@
          <div class="relative z-10 flex flex-col h-full justify-center">
             <h2 class="text-xs font-bold uppercase tracking-wider mb-4 opacity-80 border-b border-white/20 pb-2">Status Pembimbingan</h2>
             <div class="text-4xl font-bold mb-1">15 <span class="text-sm font-normal">Mahasiswa</span></div>
-            <div class="text-sm border border-white/20 bg-white/10 px-3 py-1.5 inline-block rounded max-w-fit mt-2">
-               <strong>3</strong> Menunggu Approval KRS
+            <div class="text-sm border border-white/20 bg-white/10 px-3 py-1.5 inline-block rounded max-w-fit mt-2" :class="pendingCount > 0 ? 'bg-amber-500 border-amber-400 text-white' : ''">
+               <strong>{{ pendingCount }}</strong> Menunggu Approval KRS
             </div>
          </div>
       </div>
@@ -68,34 +72,30 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
       <!-- Jadwal Hari Ini -->
       <div class="bg-white border border-slate-200 shadow-sm rounded-sm">
-         <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-            <h3 class="font-bold text-slate-800 uppercase tracking-widest text-sm text-center">Jadwal Mengajar Hari Ini</h3>
-            <span class="text-xs bg-slate-200 text-slate-700 px-2 py-1 rounded font-bold">Senin</span>
+         <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 uppercase tracking-widest text-sm">Jadwal Mengajar Anda</h3>
+            <span class="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded">{{ jadwalMengajar.length }} Sesi</span>
          </div>
          <div class="p-4 space-y-4">
-            <div class="border border-slate-200 p-3 rounded hover:border-slate-400 transition bg-white shadow-sm flex items-start">
-               <div class="w-14 flex-shrink-0 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-200 py-1.5 px-1 text-center font-mono">08:00</div>
-               <div class="ml-3 flex-1">
-                  <h4 class="font-bold text-slate-800 text-sm uppercase">Pemrograman Berorientasi Objek</h4>
-                  <div class="text-xs text-slate-500 mt-1 uppercase flex items-center justify-between">
-                     <span>Ruang Lab Komputer 1</span>
-                     <span class="font-bold text-primary-600 bg-primary-50 px-2 rounded">SINFC-2024-01</span>
-                  </div>
-               </div>
+            <div v-if="jadwalMengajar.length === 0" class="text-center py-6">
+                <p class="text-sm text-slate-500 italic">Anda belum memiliki jadwal mengajar pada semester ini.</p>
             </div>
-            <div class="border border-slate-200 p-3 rounded hover:border-slate-400 transition bg-white shadow-sm flex items-start">
-               <div class="w-14 flex-shrink-0 text-sm font-bold text-slate-700 bg-slate-50 border border-slate-200 py-1.5 px-1 text-center font-mono">13:00</div>
+            <div v-for="j in jadwalMengajar" :key="j.idJadwal" class="border border-slate-200 p-3 rounded hover:border-slate-400 transition bg-white shadow-sm flex items-start">
+               <div class="w-14 flex-shrink-0 text-amber-700 font-bold bg-amber-50 border border-amber-200 py-1.5 px-1 text-center text-xs space-y-1 rounded-sm">
+                 <div class="uppercase">{{ j.hari }}</div>
+                 <div class="font-mono">{{ j.jamMulai }}</div>
+               </div>
                <div class="ml-3 flex-1">
-                  <h4 class="font-bold text-slate-800 text-sm uppercase">Rekayasa Perangkat Lunak</h4>
+                  <h4 class="font-bold text-slate-800 text-sm uppercase">{{ j.namaMatkul }}</h4>
                   <div class="text-xs text-slate-500 mt-1 uppercase flex items-center justify-between">
-                     <span>Ruang Teori 3</span>
-                     <span class="font-bold text-primary-600 bg-primary-50 px-2 rounded">SINFC-2026-02</span>
+                     <span>{{ j.ruangan }}</span>
+                     <span class="font-bold text-primary-600 bg-primary-50 px-2 rounded">{{ j.namaKelas }}</span>
                   </div>
                </div>
             </div>
             
             <router-link to="/dosen/jadwal" class="block w-full py-2.5 text-center text-sm font-bold text-slate-600 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded transition mt-2 uppercase tracking-wide">
-               Lihat Seluruh Jadwal
+               Buka Kalender Akademik
             </router-link>
          </div>
       </div>
@@ -106,15 +106,15 @@
             <h3 class="font-bold text-slate-800 uppercase tracking-widest text-sm text-center">Tugas & Pengumuman</h3>
          </div>
          <div class="p-0">
-            <div class="flex items-start p-4 border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer">
+            <router-link to="/dosen/perwalian" class="flex items-start p-4 border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer" v-if="pendingCount > 0">
                <div class="bg-amber-100 text-amber-600 p-2 rounded flex-shrink-0 mt-0.5">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                </div>
                <div class="ml-3">
                   <h4 class="font-bold text-sm text-slate-800">Menunggu Approval KRS Bimbingan</h4>
-                  <p class="text-xs text-slate-500 mt-1">3 Mahasiswa telah mengajukan KRS untuk semester genap ini. Harap segera dilakukan verifikasi sebelum batas akhir 20 Maret 2026.</p>
+                  <p class="text-xs text-slate-500 mt-1">{{ pendingCount }} Mahasiswa telah mengajukan KRS untuk semester genap ini. Harap segera dilakukan verifikasi sebelum batas akhir 20 Maret 2026.</p>
                </div>
-            </div>
+            </router-link>
             
             <div class="flex items-start p-4 border-b border-slate-100 hover:bg-slate-50 transition cursor-pointer">
                <div class="bg-primary-100 text-primary-600 p-2 rounded flex-shrink-0 mt-0.5">
@@ -133,7 +133,33 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useMasterDataStore } from '@/stores/masterData'
+import { useKrsStore } from '@/stores/krs'
 
 const authStore = useAuthStore()
+const masterStore = useMasterDataStore()
+const krsStore = useKrsStore()
+
+// Hitung berapa maba yg nunggu approve KRS
+const pendingCount = computed(() => {
+   return Object.values(krsStore.krsData).filter(d => d.status === 'pending').length
+})
+
+// Dapatkan ID Dosen dari user yang sedang login. Jika ga login assume D01 Budi Santoso
+const myDosenId = authStore.user?.id || 'D01'
+
+const dosenProfile = computed(() => {
+   return masterStore.dosenList.find(d => d.idDosen === myDosenId)
+})
+
+const jadwalMengajar = computed(() => {
+   return masterStore.jadwalDosen(myDosenId) || []
+})
+
+const totalSksMengajar = computed(() => {
+   // hitung beban mengajar
+   return jadwalMengajar.value.reduce((total, j) => total + j.sks, 0)
+})
 </script>

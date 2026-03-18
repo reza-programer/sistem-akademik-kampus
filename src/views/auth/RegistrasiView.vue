@@ -30,9 +30,9 @@
               class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 outline-none transition-all duration-300 text-slate-800 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 font-medium"
             >
                 <option value="" disabled>Pilih Jurusan...</option>
-                <option value="Teknik Informatika">S1 Teknik Informatika</option>
                 <option value="Sistem Informasi">S1 Sistem Informasi</option>
-                <option value="Bisnis Digital">S1 Bisnis Digital</option>
+                <option value="Teknik Informatika">S1 Teknik Informatika</option>
+                <option value="Desain Komunikasi Visual">S1 Desain Komunikasi Visual</option>
             </select>
           </div>
       </div>
