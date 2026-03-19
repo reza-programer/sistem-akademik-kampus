@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { useAuthStore } from './auth'
 import { useNotificationStore } from './notification'
 
+import { useKeuanganStore } from './keuangan'
+
 export const useKrsStore = defineStore('krs', {
     state: () => ({
         // Kuota SKS maksimal
@@ -30,6 +32,9 @@ export const useKrsStore = defineStore('krs', {
         },
         totalSks: (state) => {
             return state.currentKrs.matkul.reduce((total, mk) => total + mk.sks, 0)
+        },
+        totalBiaya() {
+            return this.currentKrs.matkul.reduce((total, mk) => total + (mk.biaya || 0), 0)
         },
         isDraft: (state) => state.currentKrs.status === 'draft',
         isPending: (state) => state.currentKrs.status === 'pending',
@@ -89,11 +94,19 @@ export const useKrsStore = defineStore('krs', {
             this.krsData[nim].status = 'approved'
             this.saveState()
 
+            // Generate tagihan ke keuangan store
+            const keuanganStore = useKeuanganStore()
+            const matkul = this.krsData[nim].matkul
+            const totalBiaya = matkul.reduce((total, mk) => total + (mk.biaya || 0), 0)
+            if (totalBiaya > 0) {
+                keuanganStore.addTagihanFromKRS(nim, totalBiaya, matkul)
+            }
+
             // Trigger Notifikasi ke Mahasiswa
             const notifStore = useNotificationStore()
             notifStore.addNotification('mahasiswa', {
                 title: 'KRS Disetujui',
-                message: `Pengajuan Kartu Rencana Studi (KRS) Anda telah disetujui Dosen Wali.`,
+                message: `Pengajuan KRS Anda telah disetujui. Total biaya studi: Rp ${totalBiaya.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')},-`,
                 type: 'success'
             })
         },

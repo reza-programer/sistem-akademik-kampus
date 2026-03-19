@@ -145,6 +145,12 @@ const routes = [
         name: 'AdminMatkul',
         component: () => import('@/views/admin/DataMatkulView.vue'),
         meta: { layout: 'dashboard', requiresAuth: true, role: 'admin' }
+    },
+    {
+        path: '/admin/keuangan',
+        name: 'AdminKeuangan',
+        component: () => import('@/views/admin/AdminKeuanganView.vue'),
+        meta: { layout: 'dashboard', requiresAuth: true, role: 'admin' }
     }
 ]
 

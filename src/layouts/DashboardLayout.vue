@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-slate-50 flex">
+  <div class="h-screen overflow-hidden bg-slate-50 flex">
     <!-- Mobile Sidebar Overlay -->
     <transition name="sidebar-backdrop">
       <div v-if="isMobileSidebarOpen" class="fixed inset-0 bg-black/50 z-40 md:hidden" @click="isMobileSidebarOpen = false"></div>
@@ -79,7 +79,7 @@
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden theme-bg transition-colors duration-300">
       <!-- Navbar (Mobile + Top) -->
-      <header class="h-16 theme-card border-b flex items-center justify-between px-6 transition-colors duration-300">
+      <header class="h-16 shrink-0 theme-card border-b flex items-center justify-between px-6 transition-colors duration-300">
         <div class="font-semibold theme-text md:hidden">
           SIAKAD
         </div>
@@ -287,6 +287,7 @@ const menus = computed(() => {
       { name: 'Data Mahasiswa', path: '/admin/mahasiswa', icon: UsersIcon },
       { name: 'Data Dosen', path: '/admin/dosen', icon: AcademicCapIcon },
       { name: 'Mata Kuliah', path: '/admin/matakuliah', icon: BookOpenIcon },
+      { name: 'Kelola Keuangan', path: '/admin/keuangan', icon: BanknotesIcon },
       { name: 'Pesan Internal', path: '/inbox', icon: EnvelopeIcon, badge: () => msgStore.getUnreadCount(currentUserIdentifier.value) },
     ]
   } else if (authStore.role === 'dosen') {
@@ -308,7 +309,7 @@ const menus = computed(() => {
       { name: 'Jadwal Kuliah', path: '/mahasiswa/jadwal', icon: CalendarDaysIcon },
       { name: 'Rekap Kehadiran', path: '/mahasiswa/kehadiran', icon: ClockIcon },
       { name: 'Tugas E-Learning', path: '/mahasiswa/tugas', icon: ClipboardDocumentCheckIcon },
-      { name: 'Info Tagihan', path: '/mahasiswa/keuangan', icon: BanknotesIcon, badge: () => keuanganStore.tagihanAktif.length },
+      { name: 'Info Tagihan', path: '/mahasiswa/keuangan', icon: BanknotesIcon, badge: () => keuanganStore.tagihanAktifByNim(currentUserIdentifier.value).length },
       { name: 'Pesan Internal', path: '/inbox', icon: EnvelopeIcon, badge: () => msgStore.getUnreadCount(currentUserIdentifier.value) },
     ]
   }

@@ -13,7 +13,7 @@
     <!-- Statistik Singkat Admin -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
       <div class="bg-white border border-slate-200 shadow-sm p-0 flex flex-col">
-        <div class="bg-blue-600 text-white p-4 flex items-center justify-between">
+        <div class="bg-teal-700 text-white p-4 flex items-center justify-between">
             <h3 class="font-bold uppercase tracking-widest text-sm text-white/90">Total Mahasiswa</h3>
             <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
         </div>
@@ -27,13 +27,13 @@
       </div>
 
       <div class="bg-white border border-slate-200 shadow-sm p-0 flex flex-col">
-        <div class="bg-indigo-600 text-white p-4 flex items-center justify-between">
+        <div class="bg-slate-700 text-white p-4 flex items-center justify-between">
             <h3 class="font-bold uppercase tracking-widest text-sm text-white/90">Total Dosen Aktif</h3>
             <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
         </div>
         <div class="p-6 flex-1 flex flex-col justify-center items-center">
             <p class="text-5xl font-bold text-slate-800 mb-2">86</p>
-            <p class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-200 shadow-sm">
+            <p class="text-xs font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-200 shadow-sm">
               Semester Genap 2025/2026
             </p>
         </div>

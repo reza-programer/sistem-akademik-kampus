@@ -15,9 +15,9 @@
            </div>
            
            <h3 class="text-white/80 font-bold uppercase tracking-widest text-xs mb-1 relative z-10">Total Tagihan Belum Dibayar</h3>
-           <h2 class="text-4xl font-black tracking-tighter relative z-10 mb-4">{{ formatRupiah(keuanganStore.totalTagihanPending) }}</h2>
+           <h2 class="text-4xl font-black tracking-tighter relative z-10 mb-4">{{ formatRupiah(myTotalPending) }}</h2>
            
-           <div v-if="keuanganStore.totalTagihanPending > 0" class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 relative z-10 mt-6">
+           <div v-if="myTotalPending > 0" class="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 relative z-10 mt-6">
              <div class="flex items-center text-sm font-semibold mb-2">
                 <svg class="w-5 h-5 mr-2 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span>Segera Lakukan Pembayaran</span>
@@ -65,12 +65,12 @@
          <div class="theme-card rounded-2xl shadow-sm border theme-border overflow-hidden">
             <div class="px-5 py-4 border-b theme-border theme-bg flex justify-between items-center">
                <h3 class="font-bold theme-text">Daftar Tagihan Aktif</h3>
-               <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold">{{ keuanganStore.tagihanAktif.length }} Pending</span>
+               <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded font-bold">{{ myTagihanAktif.length }} Pending</span>
             </div>
             
             <div class="p-5">
-               <template v-if="keuanganStore.tagihanAktif.length > 0">
-                 <div v-for="tagihan in keuanganStore.tagihanAktif" :key="tagihan.id" class="border theme-border rounded-xl p-5 relative overflow-hidden transition-all hover:border-primary-400 group">
+               <template v-if="myTagihanAktif.length > 0">
+                 <div v-for="tagihan in myTagihanAktif" :key="tagihan.id" class="border theme-border rounded-xl p-5 relative overflow-hidden transition-all hover:border-primary-400 group">
                     <!-- Ribbon -->
                     <div class="absolute top-3 -right-8 bg-red-500 text-white font-bold text-[10px] tracking-widest uppercase py-1 px-10 rotate-45 shadow-sm hidden md:block">
                        Past Due
@@ -125,7 +125,7 @@
                      </tr>
                   </thead>
                   <tbody class="divide-y theme-border">
-                     <tr v-for="riwayat in keuanganStore.riwayatPembayaran" :key="riwayat.id" class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+                     <tr v-for="riwayat in myRiwayat" :key="riwayat.id" class="hover:bg-slate-50 dark:hover:bg-slate-800 transition">
                         <td class="px-5 py-4 font-mono text-xs">{{ riwayat.id }}</td>
                         <td class="px-5 py-4">
                            <p class="font-bold">{{ riwayat.jenis }}</p>
@@ -142,7 +142,7 @@
                      </tr>
                   </tbody>
                </table>
-               <div v-if="keuanganStore.riwayatPembayaran.length === 0" class="p-8 text-center text-sm theme-text opacity-60">
+               <div v-if="myRiwayat.length === 0" class="p-8 text-center text-sm theme-text opacity-60">
                  Belum ada riwayat transaksi pembayaran.
                </div>
             </div>
@@ -154,12 +154,20 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useKeuanganStore } from '@/stores/keuangan'
+import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notification'
 import Swal from 'sweetalert2'
 
 const keuanganStore = useKeuanganStore()
+const authStore = useAuthStore()
 const notificationStore = useNotificationStore()
+
+const currentNim = computed(() => authStore.user?.nim || '20260001')
+const myTagihanAktif = computed(() => keuanganStore.tagihanAktifByNim(currentNim.value))
+const myTotalPending = computed(() => keuanganStore.totalTagihanPendingByNim(currentNim.value))
+const myRiwayat = computed(() => keuanganStore.riwayatPembayaranByNim(currentNim.value))
 
 const formatRupiah = (number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number)

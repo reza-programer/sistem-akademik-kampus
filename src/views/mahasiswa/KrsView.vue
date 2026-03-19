@@ -86,9 +86,10 @@
                 <span class="px-2 py-0.5 border border-slate-300 bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider rounded-sm">SMT {{ mk.semester }}</span>
                 <h3 class="font-bold text-slate-800">{{ mk.nama }} ({{ mk.kode }})</h3>
               </div>
-              <p class="text-sm text-slate-500 mt-2 flex items-center gap-4">
+              <p class="text-sm text-slate-500 mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                  <span class="flex items-center"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg> {{ mk.dosen }}</span>
                  <span class="font-bold text-slate-700 flex items-center"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> {{ mk.sks }} SKS</span>
+                 <span class="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-xs border border-emerald-200">{{ formatRupiah(mk.biaya) }}</span>
               </p>
             </div>
             <button @click="tambahMatkul(mk)" :disabled="isMatkulSelected(mk.kode) || krsStore.totalSks + mk.sks > krsStore.maxSks" 
@@ -118,10 +119,11 @@
                <div v-for="mk in krsStore.selectedMatkul" :key="mk.kode" class="bg-white border border-slate-200 shadow-sm rounded p-3 flex items-start justify-between">
                  <div>
                    <h4 class="font-bold text-sm text-slate-800 uppercase">{{ mk.nama }}</h4>
-                   <div class="flex items-center gap-3 mt-1.5">
-                      <span class="text-xs font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-sm">{{ mk.kode }}</span>
-                      <span class="text-xs font-bold text-slate-700">{{ mk.sks }} SKS</span>
-                   </div>
+                    <div class="flex flex-wrap items-center gap-2 mt-1.5">
+                       <span class="text-xs font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-sm">{{ mk.kode }}</span>
+                       <span class="text-xs font-bold text-slate-700">{{ mk.sks }} SKS</span>
+                       <span class="text-xs font-semibold text-emerald-700">{{ formatRupiah(mk.biaya) }}</span>
+                    </div>
                  </div>
                  <button v-if="canEdit" @click="hapusMatkul(mk.kode)" class="text-slate-400 hover:text-red-600 p-1 data-html2canvas-ignore transition bg-slate-50 hover:bg-red-50 rounded border border-transparent hover:border-red-200">
                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -137,6 +139,11 @@
           </div>
         </div>
         
+        <!-- Total Biaya -->
+        <div class="px-4 py-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+           <span class="text-xs font-bold text-slate-600 uppercase tracking-wide">Total Biaya</span>
+           <span class="text-sm font-bold text-emerald-700">{{ formatRupiah(krsStore.totalBiaya) }}</span>
+        </div>
         <!-- Action Buttons Sidebar -->
         <div class="p-4 border-t border-slate-200 bg-white flex flex-col gap-3">
           <button @click="downloadKRS" class="bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-4 rounded transition flex items-center justify-center text-sm border border-slate-300 shadow-sm">
@@ -168,57 +175,63 @@ const isDownloading = ref(false)
 const searchQuery = ref('')
 const selectedSemester = ref('all')
 
+// Helper format rupiah
+const formatRupiah = (angka) => {
+  if (!angka) return 'Rp 0'
+  return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+}
+
 // Dummy Master Data Mata Kuliah Komplit (Semester 1 - 9)
 const allMatkul = ref([
   // Semester 1
-  { kode: 'KU101', nama: 'Pendidikan Agama', sks: 2, semester: '1', dosen: 'Tim Dosen' },
-  { kode: 'KU102', nama: 'Bahasa Indonesia', sks: 2, semester: '1', dosen: 'Tim Dosen' },
-  { kode: 'IF101', nama: 'Pemrograman Dasar', sks: 3, semester: '1', dosen: 'Budi Santoso, M.Kom' },
-  { kode: 'IF103', nama: 'Matematika Diskrit', sks: 3, semester: '1', dosen: 'Dr. Indah Permatasari' },
-  { kode: 'IF105', nama: 'Pengantar Teknologi Informasi', sks: 3, semester: '1', dosen: 'Arif Maulana, M.T.I.' },
-  { kode: 'IF107', nama: 'Sistem Digital', sks: 3, semester: '1', dosen: 'Siti Rahayu, M.Sc.' },
+  { kode: 'KU101', nama: 'Pendidikan Agama', sks: 2, semester: '1', dosen: 'Tim Dosen', biaya: 500000 },
+  { kode: 'KU102', nama: 'Bahasa Indonesia', sks: 2, semester: '1', dosen: 'Tim Dosen', biaya: 500000 },
+  { kode: 'IF101', nama: 'Pemrograman Dasar', sks: 3, semester: '1', dosen: 'Budi Santoso, M.Kom', biaya: 750000 },
+  { kode: 'IF103', nama: 'Matematika Diskrit', sks: 3, semester: '1', dosen: 'Dr. Indah Permatasari', biaya: 750000 },
+  { kode: 'IF105', nama: 'Pengantar Teknologi Informasi', sks: 3, semester: '1', dosen: 'Arif Maulana, M.T.I.', biaya: 750000 },
+  { kode: 'IF107', nama: 'Sistem Digital', sks: 3, semester: '1', dosen: 'Siti Rahayu, M.Sc.', biaya: 750000 },
   
   // Semester 2
-  { kode: 'KU201', nama: 'Kewarganegaraan', sks: 2, semester: '2', dosen: 'Tim Dosen' },
-  { kode: 'IF102', nama: 'Struktur Data', sks: 3, semester: '2', dosen: 'Dr. Indah Permatasari' },
-  { kode: 'IF104', nama: 'Aljabar Linear', sks: 3, semester: '2', dosen: 'Dr. Wahyu Setiawan' },
-  { kode: 'IF106', nama: 'Arsitektur Komputer', sks: 3, semester: '2', dosen: 'Siti Rahayu, M.Sc.' },
-  { kode: 'IF108', nama: 'Pemrograman Berorientasi Objek', sks: 3, semester: '2', dosen: 'Budi Santoso, M.Kom' },
+  { kode: 'KU201', nama: 'Kewarganegaraan', sks: 2, semester: '2', dosen: 'Tim Dosen', biaya: 500000 },
+  { kode: 'IF102', nama: 'Struktur Data', sks: 3, semester: '2', dosen: 'Dr. Indah Permatasari', biaya: 750000 },
+  { kode: 'IF104', nama: 'Aljabar Linear', sks: 3, semester: '2', dosen: 'Dr. Wahyu Setiawan', biaya: 750000 },
+  { kode: 'IF106', nama: 'Arsitektur Komputer', sks: 3, semester: '2', dosen: 'Siti Rahayu, M.Sc.', biaya: 750000 },
+  { kode: 'IF108', nama: 'Pemrograman Berorientasi Objek', sks: 3, semester: '2', dosen: 'Budi Santoso, M.Kom', biaya: 750000 },
 
   // Semester 3
-  { kode: 'IF201', nama: 'Basis Data Terapan', sks: 3, semester: '3', dosen: 'Arif Maulana, M.T.I.' },
-  { kode: 'IF203', nama: 'Sistem Operasi', sks: 3, semester: '3', dosen: 'Siti Rahayu, M.Sc.' },
-  { kode: 'IF205', nama: 'Rekayasa Perangkat Lunak', sks: 3, semester: '3', dosen: 'Budi Santoso, M.Kom' },
-  { kode: 'IF207', nama: 'Statistika Klasik', sks: 3, semester: '3', dosen: 'Dr. Wahyu Setiawan' },
+  { kode: 'IF201', nama: 'Basis Data Terapan', sks: 3, semester: '3', dosen: 'Arif Maulana, M.T.I.', biaya: 750000 },
+  { kode: 'IF203', nama: 'Sistem Operasi', sks: 3, semester: '3', dosen: 'Siti Rahayu, M.Sc.', biaya: 750000 },
+  { kode: 'IF205', nama: 'Rekayasa Perangkat Lunak', sks: 3, semester: '3', dosen: 'Budi Santoso, M.Kom', biaya: 750000 },
+  { kode: 'IF207', nama: 'Statistika Klasik', sks: 3, semester: '3', dosen: 'Dr. Wahyu Setiawan', biaya: 750000 },
   
   // Semester 4
-  { kode: 'IF202', nama: 'Pemrograman Web Lanjut', sks: 3, semester: '4', dosen: 'Budi Santoso, M.Kom' },
-  { kode: 'IF204', nama: 'Jaringan Komputer', sks: 3, semester: '4', dosen: 'Arif Maulana, M.T.I.' },
-  { kode: 'IF206', nama: 'Interaksi Manusia & Komputer', sks: 3, semester: '4', dosen: 'Dr. Indah Permatasari' },
-  { kode: 'IF208', nama: 'Kecerdasan Komputasional', sks: 3, semester: '4', dosen: 'Siti Rahayu, M.Sc.' },
+  { kode: 'IF202', nama: 'Pemrograman Web Lanjut', sks: 3, semester: '4', dosen: 'Budi Santoso, M.Kom', biaya: 750000 },
+  { kode: 'IF204', nama: 'Jaringan Komputer', sks: 3, semester: '4', dosen: 'Arif Maulana, M.T.I.', biaya: 750000 },
+  { kode: 'IF206', nama: 'Interaksi Manusia & Komputer', sks: 3, semester: '4', dosen: 'Dr. Indah Permatasari', biaya: 750000 },
+  { kode: 'IF208', nama: 'Kecerdasan Komputasional', sks: 3, semester: '4', dosen: 'Siti Rahayu, M.Sc.', biaya: 750000 },
   
   // Semester 5
-  { kode: 'IF301', nama: 'Kecerdasan Buatan', sks: 3, semester: '5', dosen: 'Siti Rahayu, M.Sc.' },
-  { kode: 'IF303', nama: 'Metode Numerik', sks: 3, semester: '5', dosen: 'Dr. Wahyu Setiawan' },
-  { kode: 'IF305', nama: 'Manajemen Proyek TI', sks: 3, semester: '5', dosen: 'Dr. Indah Permatasari' },
+  { kode: 'IF301', nama: 'Kecerdasan Buatan', sks: 3, semester: '5', dosen: 'Siti Rahayu, M.Sc.', biaya: 750000 },
+  { kode: 'IF303', nama: 'Metode Numerik', sks: 3, semester: '5', dosen: 'Dr. Wahyu Setiawan', biaya: 750000 },
+  { kode: 'IF305', nama: 'Manajemen Proyek TI', sks: 3, semester: '5', dosen: 'Dr. Indah Permatasari', biaya: 750000 },
   
   // Semester 6
-  { kode: 'IF302', nama: 'Kriptografi & Keamanan Jaringan', sks: 3, semester: '6', dosen: 'Arif Maulana, M.T.I.' },
-  { kode: 'IF304', nama: 'Data Mining', sks: 3, semester: '6', dosen: 'Siti Rahayu, M.Sc.' },
-  { kode: 'IF306', nama: 'Kerja Praktik (Magang)', sks: 4, semester: '6', dosen: 'Tim Dosen Pembimbing' },
+  { kode: 'IF302', nama: 'Kriptografi & Keamanan Jaringan', sks: 3, semester: '6', dosen: 'Arif Maulana, M.T.I.', biaya: 750000 },
+  { kode: 'IF304', nama: 'Data Mining', sks: 3, semester: '6', dosen: 'Siti Rahayu, M.Sc.', biaya: 750000 },
+  { kode: 'IF306', nama: 'Kerja Praktik (Magang)', sks: 4, semester: '6', dosen: 'Tim Dosen Pembimbing', biaya: 1000000 },
   
-  // Semester 7 (Request User)
-  { kode: 'IF401', nama: 'Seminar Usulan Penelitian (SUP)', sks: 2, semester: '7', dosen: 'Tim Dosen Pembimbing' },
-  { kode: 'IF403', nama: 'Kapita Selekta / Topik Khusus I', sks: 3, semester: '7', dosen: 'Budi Santoso, M.Kom' },
-  { kode: 'IF405', nama: 'Metodologi Penelitian Canggih', sks: 3, semester: '7', dosen: 'Dr. Indah Permatasari' },
+  // Semester 7
+  { kode: 'IF401', nama: 'Seminar Usulan Penelitian (SUP)', sks: 2, semester: '7', dosen: 'Tim Dosen Pembimbing', biaya: 500000 },
+  { kode: 'IF403', nama: 'Kapita Selekta / Topik Khusus I', sks: 3, semester: '7', dosen: 'Budi Santoso, M.Kom', biaya: 750000 },
+  { kode: 'IF405', nama: 'Metodologi Penelitian Canggih', sks: 3, semester: '7', dosen: 'Dr. Indah Permatasari', biaya: 750000 },
   
   // Semester 8
-  { kode: 'IF402', nama: 'Pengembangan Aplikasi Enterprise', sks: 3, semester: '8', dosen: 'Arif Maulana, M.T.I.' },
-  { kode: 'IF404', nama: 'Kapita Selekta / Topik Khusus II', sks: 3, semester: '8', dosen: 'Dr. Wahyu Setiawan' },
+  { kode: 'IF402', nama: 'Pengembangan Aplikasi Enterprise', sks: 3, semester: '8', dosen: 'Arif Maulana, M.T.I.', biaya: 750000 },
+  { kode: 'IF404', nama: 'Kapita Selekta / Topik Khusus II', sks: 3, semester: '8', dosen: 'Dr. Wahyu Setiawan', biaya: 750000 },
 
-  // Semester 9 (Request User)
-  { kode: 'IF502', nama: 'Seminar Hasil Penelitian (SHP)', sks: 2, semester: '9', dosen: 'Tim Dosen Pembimbing' },
-  { kode: 'IF504', nama: 'Skripsi / Tugas Akhir', sks: 6, semester: '9', dosen: 'Tim Dosen Pembimbing' },
+  // Semester 9
+  { kode: 'IF502', nama: 'Seminar Hasil Penelitian (SHP)', sks: 2, semester: '9', dosen: 'Tim Dosen Pembimbing', biaya: 500000 },
+  { kode: 'IF504', nama: 'Skripsi / Tugas Akhir', sks: 6, semester: '9', dosen: 'Tim Dosen Pembimbing', biaya: 1500000 },
 ])
 
 const canEdit = computed(() => krsStore.isDraft || krsStore.status === 'rejected')
