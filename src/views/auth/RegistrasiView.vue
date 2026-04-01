@@ -52,13 +52,24 @@
           <div class="relative">
             <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Nomor Handphone (WA)</label>
             <input 
-              v-model="form.nohp" 
+              v-model="form.no_hp" 
               type="text" 
               required
               class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 outline-none transition-all duration-300 text-slate-800 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 placeholder-slate-400 font-medium"
               placeholder="0812xxxxxx"
             >
           </div>
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5 ml-1">Asal Sekolah</label>
+        <input 
+          v-model="form.asal_sekolah" 
+          type="text" 
+          required
+          class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 outline-none transition-all duration-300 text-slate-800 focus:bg-white focus:border-primary-500 focus:ring-4 focus:ring-primary-100 placeholder-slate-400 font-medium"
+          placeholder="SMA / SMK / MA"
+        >
       </div>
 
       <div class="relative">
@@ -113,7 +124,9 @@ const form = ref({
    nama: '',
    prodi: '',
    email: '',
-   nohp: '',
+   no_hp: '',
+   asal_sekolah: '',
+   jalur: 'Reguler',
    password: ''
 })
 

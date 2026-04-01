@@ -38,25 +38,33 @@
             <template v-if="filteredDosen.length > 0">
               <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition" v-for="dosen in filteredDosen" :key="dosen.id">
                 <td class="px-6 py-4 font-medium">{{ dosen.nidn }}</td>
-                <td class="px-6 py-4">
+                  <td class="px-6 py-4">
                   <div class="flex items-center">
                      <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-3 text-xs flex-shrink-0">
-                       D
+                       {{ dosen.nama.charAt(0).toUpperCase() }}
                      </div>
-                     <span class="truncate">{{ dosen.nama }}</span>
+                     <div>
+                        <span class="truncate block font-bold">{{ dosen.nama }}</span>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                           <span v-for="j in getJadwalDosen(dosen.idDosen)" :key="j.idJadwal" class="px-1.5 py-0.5 bg-slate-100 border text-[10px] rounded text-slate-600 truncate max-w-[150px]" :title="`${j.namaMatkul} (${j.sks} SKS) - ${j.namaKelas}`">
+                              {{ j.namaMatkul }} ({{ j.sks }} SKS)
+                           </span>
+                        </div>
+                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 opacity-80">{{ dosen.email }}</td>
+                <td class="px-6 py-4 opacity-80 text-xs">{{ dosen.user?.email || '-' }}</td>
                 <td class="px-6 py-4">
-                  <span v-if="dosen.status === 'Aktif'" class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold">Aktif</span>
-                  <span v-else-if="dosen.status === 'Cuti'" class="px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-full text-xs font-semibold">Cuti</span>
-                  <span v-else class="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full text-xs font-semibold">Tugas Belajar</span>
+                  <span class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold">Aktif</span>
                 </td>
                 <td class="px-6 py-4 text-center">
-                  <button @click="openModal('edit', dosen)" class="p-1.5 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 transition">
+                  <button @click="openAssignModal(dosen)" class="p-1.5 text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-2 transition" title="Tugaskan Mata Kuliah">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                  </button>
+                  <button @click="openModal('edit', dosen)" class="p-1.5 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 transition" title="Edit Data">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   </button>
-                  <button @click="confirmDelete(dosen.id)" class="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-lg transition">
+                  <button @click="confirmDelete(dosen.nidn)" class="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-lg transition" title="Hapus Dosen">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                   </button>
                 </td>
@@ -112,33 +120,121 @@
         </form>
       </div>
     </div>
+    <!-- Modal Jadwal Mengajar -->
+    <div v-if="isAssignModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-opacity">
+      <div class="theme-card w-full max-w-lg rounded-2xl shadow-xl overflow-hidden border theme-border">
+        <div class="px-6 py-4 border-b theme-border flex justify-between items-center theme-bg">
+          <h3 class="font-bold text-lg theme-text">Tugaskan Mata Kuliah</h3>
+          <button @click="closeAssignModal" class="opacity-60 hover:opacity-100 transition focus:outline-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        
+        <form @submit.prevent="saveAssignment" class="p-6 space-y-4">
+          <div class="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg flex items-center mb-2">
+             <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold mr-3 text-sm flex-shrink-0">
+                {{ assignData.namaDosen ? assignData.namaDosen.charAt(0) : 'D' }}
+             </div>
+             <div>
+                <p class="text-xs text-indigo-600 dark:text-indigo-400 font-bold uppercase track-widest">Dosen Pengajar</p>
+                <p class="font-bold text-sm">{{ assignData.namaDosen }}</p>
+             </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium theme-text opacity-80 mb-1">Mata Kuliah (beserta SKS)</label>
+             <select v-model="assignData.kodeMtk" required class="w-full px-4 py-2 theme-bg border theme-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-400 theme-text">
+                <option value="" disabled>-- Pilih Mata Kuliah --</option>
+                <option v-for="m in masterStore.matkulList" :key="m.kodeMtk" :value="m.kodeMtk">
+                   {{ m.namaMatkul }} ({{ m.sks }} SKS)
+                </option>
+             </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium theme-text opacity-80 mb-1">Kelas Penempatan</label>
+             <select v-model="assignData.idKelas" required class="w-full px-4 py-2 theme-bg border theme-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-400 theme-text">
+                <option value="" disabled>-- Pilih Kelas --</option>
+                <option v-for="k in masterStore.kelasList" :key="k.idKelas" :value="k.idKelas">
+                   {{ k.namaKelas }} ({{ k.prodi }})
+                </option>
+             </select>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium theme-text opacity-80 mb-1">Hari</label>
+                <select v-model="assignData.hari" required class="w-full px-4 py-2 theme-bg border theme-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-400 theme-text">
+                   <option value="Senin">Senin</option><option value="Selasa">Selasa</option>
+                   <option value="Rabu">Rabu</option><option value="Kamis">Kamis</option>
+                   <option value="Jumat">Jumat</option><option value="Sabtu">Sabtu</option>
+                </select>
+             </div>
+             <div>
+               <label class="block text-sm font-medium theme-text opacity-80 mb-1">Ruangan</label>
+               <input v-model="assignData.ruangan" type="text" placeholder="Misal: Lab Komputer" required class="w-full px-4 py-2 theme-bg border theme-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-400 theme-text">
+             </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium theme-text opacity-80 mb-1">Jam Mulai</label>
+               <input v-model="assignData.jamMulai" type="time" required class="w-full px-4 py-2 theme-bg border theme-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-400 theme-text">
+             </div>
+             <div>
+               <label class="block text-sm font-medium theme-text opacity-80 mb-1">Jam Selesai</label>
+               <input v-model="assignData.jamSelesai" type="time" required class="w-full px-4 py-2 theme-bg border theme-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-400 theme-text">
+             </div>
+          </div>
+          
+          <div class="pt-4 flex gap-3">
+             <button type="button" @click="closeAssignModal" class="flex-1 px-4 py-2 border theme-border rounded-xl font-medium opacity-80 hover:bg-slate-50 dark:hover:bg-slate-800 transition">Batal</button>
+             <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition shadow-sm">Simpan Jadwal</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useMasterDataStore } from '@/stores/masterData'
 import Swal from 'sweetalert2'
 
-const dosenList = ref([
-  { id: 1, nidn: '110022331', nama: 'Budi Santoso, M.Kom', email: 'budi.s@kampus.ac.id', status: 'Aktif' },
-  { id: 2, nidn: '110022332', nama: 'Dr. Indah Permatasari, S.T., M.T.', email: 'indah.p@kampus.ac.id', status: 'Aktif' },
-  { id: 3, nidn: '110022333', nama: 'Arif Maulana, S.Kom., M.T.I.', email: 'arif.m@kampus.ac.id', status: 'Cuti' },
-  { id: 4, nidn: '110022334', nama: 'Siti Rahayu, S.Si., M.Sc.', email: 'siti.r@kampus.ac.id', status: 'Tugas Belajar' },
-])
+const masterStore = useMasterDataStore()
+
+onMounted(async () => {
+    await masterStore.fetchAll()
+})
 
 const searchQuery = ref('')
 const statusFilter = ref('')
 
 const isModalOpen = ref(false)
 const modalMode = ref('add')
-
 const initialForm = { id: null, nidn: '', nama: '', email: '', status: 'Aktif' }
 const formData = ref({ ...initialForm })
 
+const isAssignModalOpen = ref(false)
+const assignData = ref({
+   idDosen: '',
+   namaDosen: '',
+   kodeMtk: '',
+   idKelas: '',
+   hari: 'Senin',
+   jamMulai: '08:00',
+   jamSelesai: '10:30',
+   ruangan: 'Reguler A'
+})
+
+const getJadwalDosen = (idDosen) => {
+   return masterStore.jadwalMengajar.filter(j => j.idDosen === idDosen)
+}
+
 const filteredDosen = computed(() => {
-  return dosenList.value.filter(dosen => {
+  return (masterStore.dosenList || []).filter(dosen => {
     const matchSearch = dosen.nama.toLowerCase().includes(searchQuery.value.toLowerCase()) || dosen.nidn.includes(searchQuery.value)
-    const matchStatus = statusFilter.value === '' || dosen.status === statusFilter.value
+    // status kepegawaian tidak ada di db, anggap Aktif default
+    const matchStatus = true; 
     return matchSearch && matchStatus
   })
 })
@@ -158,40 +254,41 @@ const closeModal = () => {
   formData.value = { ...initialForm }
 }
 
-const saveData = () => {
-  if (modalMode.value === 'add') {
-    const newId = dosenList.value.length > 0 ? Math.max(...dosenList.value.map(d => d.id)) + 1 : 1
-    dosenList.value.unshift({ ...formData.value, id: newId })
-  } else {
-    const index = dosenList.value.findIndex(d => d.id === formData.value.id)
-    if (index !== -1) {
-      dosenList.value[index] = { ...formData.value }
-    }
-  }
-  closeModal()
+const openAssignModal = (dosen) => {
+   assignData.value = {
+      idDosen: dosen.idDosen,
+      namaDosen: dosen.nama,
+      kodeMtk: '',
+      idKelas: '',
+      hari: 'Senin',
+      jamMulai: '08:00',
+      jamSelesai: '10:30',
+      ruangan: ''
+   }
+   isAssignModalOpen.value = true
 }
 
-const confirmDelete = (id) => {
+const closeAssignModal = () => {
+   isAssignModalOpen.value = false
+}
+
+const saveAssignment = async () => {
+   // Validate if already teaching that class? Optional.
+   await masterStore.tambahJadwal(assignData.value)
+   Swal.fire('Berhasil Terjadwal', 'Mata kuliah berhasil ditambahkan ke beban mengajar dosen!', 'success')
+   closeAssignModal()
+}
+
+const saveData = () => {
+   Swal.fire('Belum Diimplementasi', 'Fitur tambah/edit dosen belum API-ready.', 'info')
+   closeModal()
+}
+
+const confirmDelete = (nidn) => {
   Swal.fire({
       title: 'Hapus Dosen?',
-      text: "Yakin ingin menghapus dosen ini dari sistem?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Ya, Hapus',
-      cancelButtonText: 'Batal'
-  }).then((result) => {
-      if (result.isConfirmed) {
-          dosenList.value = dosenList.value.filter(d => d.id !== id)
-          Swal.fire({
-              title: 'Terhapus!',
-              text: 'Data dosen berhasil dihapus.',
-              icon: 'success',
-              timer: 1500,
-              showConfirmButton: false
-          })
-      }
+      text: "Fitur ini memerlukan penyesuaian endpoint API di backend.",
+      icon: 'info'
   })
 }
 </script>

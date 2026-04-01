@@ -8,6 +8,10 @@
 
     <!-- Render Dashboard Khusus Mahasiswa -->
     <MahasiswaDashboard v-if="role === 'mahasiswa'" />
+
+    <div v-if="!role" class="text-slate-500">
+      Role tidak terdeteksi.
+    </div>
   </div>
 </template>
 
@@ -21,5 +25,5 @@ import DosenDashboard from './dosen/DosenDashboard.vue'
 import MahasiswaDashboard from './mahasiswa/MahasiswaDashboard.vue'
 
 const authStore = useAuthStore()
-const role = computed(() => authStore.role)
+const role = computed(() => (authStore.role || '').toLowerCase())
 </script>

@@ -14,7 +14,20 @@
     <!-- Area Tabel -->
     <div class="theme-card rounded-2xl shadow-sm border overflow-hidden">
       <div class="p-4 border-b theme-border flex flex-wrap gap-4 justify-between items-center theme-bg">
-        <input v-model="searchQuery" type="text" placeholder="Cari NIM atau Nama..." class="px-4 py-2 theme-card border rounded-xl text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-primary-200 theme-text">
+        <div class="flex items-center space-x-3 w-full md:w-auto flex-wrap gap-y-3 md:gap-y-0">
+           <input v-model="searchQuery" type="text" placeholder="Cari NIM atau Nama..." class="px-4 py-2 theme-card border rounded-xl text-sm w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-primary-200 theme-text">
+           <select v-model="filterProdi" class="px-4 py-2 theme-card border rounded-xl text-sm outline-none w-full md:w-auto theme-text focus:ring-2 focus:ring-primary-200">
+               <option value="all">Semua Prodi</option>
+               <option value="Sistem Informasi">Sistem Informasi</option>
+               <option value="Teknik Informatika">Teknik Informatika</option>
+               <option value="Desain Komunikasi Visual">Desain Komunikasi Visual</option>
+               <option value="Teknik Sipil">Teknik Sipil</option>
+           </select>
+           <select v-model="filterKelas" class="px-4 py-2 theme-card border rounded-xl text-sm outline-none w-full md:w-auto theme-text focus:ring-2 focus:ring-primary-200">
+               <option value="all">Semua Kelas</option>
+               <option v-for="k in (masterStore.kelasList || [])" :key="k.idKelas" :value="k.idKelas">{{ k.namaKelas }} ({{ k.idKelas }})</option>
+           </select>
+        </div>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm theme-text">
@@ -22,26 +35,28 @@
             <tr>
               <th class="px-6 py-4">NIM</th>
               <th class="px-6 py-4">Nama Mahasiswa</th>
-              <th class="px-6 py-4">Jurusan</th>
-              <th class="px-6 py-4">Angkatan</th>
+              <th class="px-6 py-4">Program Studi</th>
+              <th class="px-6 py-4 text-center">Kelas</th>
               <th class="px-6 py-4">Status</th>
               <th class="px-6 py-4 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody class="divide-y theme-border">
             <template v-if="filteredMahasiswa.length > 0">
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition" v-for="mhs in filteredMahasiswa" :key="mhs.id">
-                <td class="px-6 py-4 font-medium">{{ mhs.nim }}</td>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition" v-for="mhs in filteredMahasiswa" :key="mhs.nim">
+                <td class="px-6 py-4 font-mono text-primary-600 font-bold">{{ mhs.nim }}</td>
                 <td class="px-6 py-4">
                   <div class="flex items-center">
                      <div class="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-bold mr-3 text-xs flex-shrink-0">
-                       {{ mhs.nama.charAt(0) }}
+                       {{ mhs.name ? mhs.name.charAt(0).toUpperCase() : 'M' }}
                      </div>
-                     <span class="truncate">{{ mhs.nama }}</span>
+                     <span class="truncate font-bold">{{ mhs.name }}</span>
                   </div>
                 </td>
-                <td class="px-6 py-4">{{ mhs.jurusan }}</td>
-                <td class="px-6 py-4">{{ mhs.angkatan }}</td>
+                <td class="px-6 py-4">{{ mhs.prodi || '-' }}</td>
+                <td class="px-6 py-4 text-center">
+                    <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 border theme-border rounded font-mono text-xs">{{ mhs.idKelas || '-' }}</span>
+                </td>
                 <td class="px-6 py-4">
                   <span class="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-semibold">Aktif</span>
                 </td>
@@ -49,7 +64,7 @@
                   <button @click="openModal('edit', mhs)" class="p-1.5 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   </button>
-                  <button @click="konfirmasiHapus(mhs.id)" class="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-lg transition">
+                  <button @click="konfirmasiHapus(mhs.nim)" class="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-lg transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                   </button>
                 </td>
@@ -115,32 +130,53 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useMasterDataStore } from '@/stores/masterData'
 import Swal from 'sweetalert2'
 
-// Dummy State (Sebagai pengganti Database/API)
-const mahasiswaList = ref([
-  { id: 1, nim: '20260001', nama: 'Andi Wijaya', jurusan: 'Teknik Informatika', angkatan: '2026' },
-  { id: 2, nim: '20260002', nama: 'Budi Santoso', jurusan: 'Sistem Informasi', angkatan: '2026' },
-  { id: 3, nim: '20240003', nama: 'Citra Kirana', jurusan: 'Bisnis Digital', angkatan: '2024' },
-  { id: 4, nim: '20250004', nama: 'Dewi Lestari', jurusan: 'Teknik Informatika', angkatan: '2025' },
-  { id: 5, nim: '20260005', nama: 'Eko Prasetyo', jurusan: 'Sistem Informasi', angkatan: '2026' },
-])
+const authStore = useAuthStore()
+const masterStore = useMasterDataStore()
 
+onMounted(async () => {
+   await authStore.fetchMahasiswa()
+   await masterStore.fetchAll()
+})
+
+const filterProdi = ref('all')
+const filterKelas = ref('all')
 const searchQuery = ref('')
 const isModalOpen = ref(false)
 const modalMode = ref('add') // 'add' atau 'edit'
 
-const initialForm = { id: null, nim: '', nama: '', jurusan: 'Teknik Informatika', angkatan: '2025' }
+const initialForm = { id: null, nim: '', nama: '', jurusan: 'Teknik Informatika', angkatan: '2026' }
 const formData = ref({ ...initialForm })
+
+// Computed Data Dari Database
+const activeMahasiswa = computed(() => {
+   return (authStore.mahasiswaDB || [])
+      .filter(m => m.user && m.role === 'mahasiswa')
+      .map(m => m.user)
+})
 
 // Computed Filter
 const filteredMahasiswa = computed(() => {
-  if (!searchQuery.value) return mahasiswaList.value
-  return mahasiswaList.value.filter(mhs => 
-    mhs.nama.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-    mhs.nim.includes(searchQuery.value)
-  )
+  let result = activeMahasiswa.value;
+  
+  if (filterProdi.value !== 'all') {
+      result = result.filter(m => m.prodi === filterProdi.value)
+  }
+  if (filterKelas.value !== 'all') {
+      result = result.filter(m => m.idKelas === filterKelas.value)
+  }
+  if (searchQuery.value) {
+      const q = searchQuery.value.toLowerCase()
+      result = result.filter(m => 
+          (m.name && m.name.toLowerCase().includes(q)) || 
+          (m.nim && m.nim.toLowerCase().includes(q))
+      )
+  }
+  return result;
 })
 
 // Buka Modal
@@ -162,42 +198,16 @@ const closeModal = () => {
 
 // Simpan Data
 const saveData = () => {
-  if (modalMode.value === 'add') {
-    // Generate simple ID
-    const newId = mahasiswaList.value.length > 0 ? Math.max(...mahasiswaList.value.map(m => m.id)) + 1 : 1
-    mahasiswaList.value.unshift({ ...formData.value, id: newId })
-  } else {
-    // Edit
-    const index = mahasiswaList.value.findIndex(m => m.id === formData.value.id)
-    if (index !== -1) {
-      mahasiswaList.value[index] = { ...formData.value }
-    }
-  }
-  closeModal()
+   Swal.fire('Belum Diimplementasi', 'Fitur tambah/edit manual belum tersedia di backend karena data terhubung ke PMB.', 'info')
+   closeModal()
 }
 
 // Hapus Data
-const konfirmasiHapus = (id) => {
+const konfirmasiHapus = (nim) => {
   Swal.fire({
       title: 'Hapus Mahasiswa?',
-      text: "Apakah Anda yakin ingin menghapus data mahasiswa ini?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Ya, Hapus',
-      cancelButtonText: 'Batal'
-  }).then((result) => {
-      if (result.isConfirmed) {
-          mahasiswaList.value = mahasiswaList.value.filter(m => m.id !== id)
-          Swal.fire({
-              title: 'Terhapus!',
-              text: 'Data mahasiswa berhasil dihapus.',
-              icon: 'success',
-              timer: 1500,
-              showConfirmButton: false
-          })
-      }
+      text: "Fitur ini memerlukan penyesuaian di API backend.",
+      icon: 'info'
   })
 }
 </script>

@@ -160,17 +160,19 @@ const router = createRouter({
 })
 
 // Navigation Guard Singkat
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
     const isAuthenticated = localStorage.getItem('token')
     const userRole = localStorage.getItem('role')
 
     if (to.meta.requiresAuth && !isAuthenticated) {
-        next({ name: 'Login' })
-    } else if (to.meta.role && to.meta.role !== userRole) {
-        next({ name: 'Dashboard' })
-    } else {
-        next()
+        return { name: 'Login' }
     }
+
+    if (to.meta.role && to.meta.role !== userRole) {
+        return { name: 'Dashboard' }
+    }
+
+    return true
 })
 
 export default router

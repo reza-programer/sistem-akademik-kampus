@@ -38,19 +38,19 @@
           </thead>
           <tbody class="divide-y theme-border">
             <template v-if="filteredMatkul.length > 0">
-               <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition" v-for="mk in filteredMatkul" :key="mk.id">
-                <td class="px-6 py-4 font-medium">{{ mk.kode }}</td>
-                <td class="px-6 py-4 font-bold">{{ mk.nama }}</td>
+               <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition" v-for="mk in filteredMatkul" :key="mk.kodeMtk">
+                <td class="px-6 py-4 font-medium">{{ mk.kodeMtk }}</td>
+                <td class="px-6 py-4 font-bold">{{ mk.namaMatkul }}</td>
                 <td class="px-6 py-4 text-center">
                    <span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded font-semibold">{{ mk.sks }}</span>
                 </td>
                 <td class="px-6 py-4 text-center">{{ mk.semester }}</td>
-                <td class="px-6 py-4 opacity-80">{{ mk.dosen }}</td>
+                <td class="px-6 py-4 opacity-80">-</td>
                 <td class="px-6 py-4 text-center">
                   <button @click="openModal('edit', mk)" class="p-1.5 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 rounded-lg mr-2 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   </button>
-                  <button @click="confirmDelete(mk.id)" class="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-lg transition">
+                  <button @click="confirmDelete(mk.kodeMtk)" class="p-1.5 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-lg transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                   </button>
                 </td>
@@ -126,16 +126,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useMasterDataStore } from '@/stores/masterData'
 import Swal from 'sweetalert2'
 
-const matkulList = ref([
-  { id: 1, kode: 'IF101', nama: 'Pemrograman Dasar', sks: 3, semester: '1', dosen: 'Budi Santoso, M.Kom' },
-  { id: 2, kode: 'IF102', nama: 'Struktur Data', sks: 3, semester: '2', dosen: 'Dr. Indah Permatasari, S.T., M.T.' },
-  { id: 3, kode: 'IF201', nama: 'Basis Data', sks: 3, semester: '3', dosen: 'Arif Maulana, S.Kom., M.T.I.' },
-  { id: 4, kode: 'IF202', nama: 'Pemrograman Web Lanjut', sks: 3, semester: '4', dosen: 'Budi Santoso, M.Kom' },
-  { id: 5, kode: 'KU101', nama: 'Pendidikan Agama Islam', sks: 2, semester: '1', dosen: '-' },
-])
+const masterStore = useMasterDataStore()
+
+onMounted(async () => {
+   await masterStore.fetchAll()
+})
 
 const searchQuery = ref('')
 const semesterFilter = ref('')
@@ -147,9 +146,11 @@ const initialForm = { id: null, kode: '', nama: '', sks: 3, semester: '1', dosen
 const formData = ref({ ...initialForm })
 
 const filteredMatkul = computed(() => {
-  return matkulList.value.filter(mk => {
-    const matchSearch = mk.nama.toLowerCase().includes(searchQuery.value.toLowerCase()) || mk.kode.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchSemester = semesterFilter.value === '' || mk.semester === semesterFilter.value
+  return (masterStore.matkulList || []).filter(mk => {
+    const mkNama = mk.namaMatkul ? mk.namaMatkul.toLowerCase() : ''
+    const mkKode = mk.kodeMtk ? mk.kodeMtk.toLowerCase() : ''
+    const matchSearch = mkNama.includes(searchQuery.value.toLowerCase()) || mkKode.includes(searchQuery.value.toLowerCase())
+    const matchSemester = semesterFilter.value === '' || String(mk.semester) === String(semesterFilter.value)
     return matchSearch && matchSemester
   })
 })
@@ -170,42 +171,15 @@ const closeModal = () => {
 }
 
 const saveData = () => {
-  // Format kode jadi uppercase
-  formData.value.kode = formData.value.kode.toUpperCase()
-  
-  if (modalMode.value === 'add') {
-    const newId = matkulList.value.length > 0 ? Math.max(...matkulList.value.map(mk => mk.id)) + 1 : 1
-    matkulList.value.unshift({ ...formData.value, id: newId })
-  } else {
-    const index = matkulList.value.findIndex(mk => mk.id === formData.value.id)
-    if (index !== -1) {
-      matkulList.value[index] = { ...formData.value }
-    }
-  }
-  closeModal()
+   Swal.fire('Belum Diimplementasi', 'Fitur tambah/edit mata kuliah belum API-ready.', 'info')
+   closeModal()
 }
 
-const confirmDelete = (id) => {
+const confirmDelete = (kodeMtk) => {
   Swal.fire({
       title: 'Hapus Mata Kuliah?',
-      text: "Yakin ingin menghapus mata kuliah ini secara permanen dari rencana kurikulum?",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#64748b',
-      confirmButtonText: 'Ya, Hapus',
-      cancelButtonText: 'Batal'
-  }).then((result) => {
-      if (result.isConfirmed) {
-          matkulList.value = matkulList.value.filter(mk => mk.id !== id)
-          Swal.fire({
-              title: 'Terhapus!',
-              text: 'Data mata kuliah berhasil dihapus.',
-              icon: 'success',
-              timer: 1500,
-              showConfirmButton: false
-          })
-      }
+      text: "Fitur ini memerlukan penyesuaian endpoint API di backend.",
+      icon: 'info'
   })
 }
 </script>

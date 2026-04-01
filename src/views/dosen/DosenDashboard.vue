@@ -144,7 +144,8 @@ const krsStore = useKrsStore()
 
 // Hitung berapa maba yg nunggu approve KRS
 const pendingCount = computed(() => {
-   return Object.values(krsStore.krsData).filter(d => d.status === 'pending').length
+   const data = krsStore.krsData || {}
+   return Object.values(data).filter(d => d?.status === 'pending').length
 })
 
 // Dapatkan ID Dosen dari user yang sedang login. Jika ga login assume D01 Budi Santoso

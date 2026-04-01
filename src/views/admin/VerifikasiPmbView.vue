@@ -6,7 +6,8 @@
         <p class="theme-text opacity-60 text-sm mt-1">Tinjau registrasi, berikan persetujuan, dan rilis Nomor Induk (NIM) untuk pendaftar.</p>
       </div>
       <div class="flex space-x-2">
-         <span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg text-sm font-medium">Tertunda: {{ authStore.calonMahasiswa.length }} Data</span>
+         <button @click="seedKelas" class="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-sm font-medium hover:bg-blue-100">Generate Data Kelas</button>
+         <span class="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-lg text-sm font-medium">Tertunda: {{ (authStore.calonMahasiswa || []).length }} Data</span>
       </div>
     </div>
 
@@ -17,7 +18,7 @@
           class="pb-3 px-2 font-bold text-sm transition transition-all duration-300 relative"
           :class="activeTab === 'pending' ? 'text-primary-600' : 'text-slate-500 hover:text-slate-700'"
        >
-          Antrean Verifikasi ({{ authStore.calonMahasiswa.length }})
+          Antrean Verifikasi ({{ (authStore.calonMahasiswa || []).length }})
           <div v-show="activeTab === 'pending'" class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-600 rounded-t-full"></div>
        </button>
        <button 
@@ -45,16 +46,16 @@
             </tr>
           </thead>
           <tbody class="divide-y theme-border">
-            <template v-if="authStore.calonMahasiswa.length > 0">
+            <template v-if="(authStore.calonMahasiswa || []).length > 0">
                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition" v-for="camaba in authStore.calonMahasiswa" :key="camaba.id">
                  <td class="px-6 py-4 font-mono text-[10px] opacity-70">{{ camaba.id }}</td>
                  <td class="px-6 py-4 font-bold text-primary-600">{{ camaba.nama }}</td>
                  <td class="px-6 py-4 text-[11px] leading-tight opacity-90">
-                    <div class="font-medium text-slate-800">{{ camaba.nohp }}</div>
+                    <div class="font-medium text-slate-800">{{ camaba.no_hp }}</div>
                     <div>{{ camaba.email }}</div>
                  </td>
                  <td class="px-6 py-4">{{ camaba.prodi }}</td>
-                 <td class="px-6 py-4 text-[11px] opacity-80">{{ new Date(camaba.tanggalDaftar).toLocaleString('id-ID') }}</td>
+                 <td class="px-6 py-4 text-[11px] opacity-80">{{ new Date(camaba.tanggal_daftar || camaba.tanggalDaftar).toLocaleString('id-ID') }}</td>
                  <td class="px-6 py-4 text-center min-w-[200px]">
                     <button @click="tolak(camaba.id, camaba.nama)" class="px-3 py-1.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold transition mr-2">Tolak</button>
                     <button @click="setujui(camaba)" class="px-4 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition shadow-sm">Terima & Buat NIM</button>
@@ -79,7 +80,7 @@
              <input type="text" v-model="searchRiwayat" placeholder="Cari NIM / Nama..." class="px-4 py-2 theme-card border rounded-xl text-sm outline-none w-full md:w-48 theme-text focus:ring-2 focus:ring-primary-200">
              <select v-model="filterKelasHistory" class="px-4 py-2 theme-card border rounded-xl text-sm outline-none w-full md:w-auto theme-text focus:ring-2 focus:ring-primary-200">
                 <option value="all">Semua Kelas</option>
-                <option v-for="k in masterStore.kelasList" :key="k.idKelas" :value="k.idKelas">{{ k.namaKelas }} ({{ k.idKelas }})</option>
+                <option v-for="k in (masterStore.kelasList || [])" :key="k.idKelas" :value="k.idKelas">{{ k.namaKelas }} ({{ k.idKelas }})</option>
              </select>
           </div>
           <button @click="exportToExcel" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm flex items-center justify-center">
@@ -140,7 +141,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useMasterDataStore } from '@/stores/masterData'
 import Swal from 'sweetalert2'
@@ -148,6 +149,13 @@ import emailjs from '@emailjs/browser'
 
 const authStore = useAuthStore()
 const masterStore = useMasterDataStore()
+
+// Fetch data saat halaman dibuka
+onMounted(async () => {
+   await authStore.fetchCalonMahasiswa()
+   await authStore.fetchMahasiswa()
+   await masterStore.fetchAll()
+})
 
 const activeTab = ref('pending')
 const filterKelasHistory = ref('all')
@@ -157,7 +165,7 @@ const itemsPerPage = 10
 
 // Ambil data dari mahasiswaDB yang mana itu adalah akun MHS yang telah digenerate (diverifikasi)
 const mahasiswaTerverifikasi = computed(() => {
-   return authStore.mahasiswaDB
+   return (authStore.mahasiswaDB || [])
       .filter(m => m.user && m.role === 'mahasiswa')
       .map(m => m)
 })
@@ -199,7 +207,6 @@ const nextPage = () => {
 }
 
 // Reset curpage kalau filter berubah
-import { watch } from 'vue'
 watch([filterKelasHistory, searchRiwayat], () => {
    currentPage.value = 1
 })
@@ -302,12 +309,23 @@ const sendRealEmail = (nama, emailTarget, nimBaru) => {
 
 const setujui = (camaba) => {
    // Filter kelas yang sesuai dengan Program Studi pendaftar
-   const availableClasses = masterStore.kelasList.filter(k => k.prodi === camaba.prodi)
+   let availableClasses = masterStore.kelasList.filter(k => k.prodi === camaba.prodi)
+   
+   // Fallback: kalau tidak ada kelas match, tampilkan semua kelas
+   if (availableClasses.length === 0) {
+      availableClasses = masterStore.kelasList
+   }
+   
+   // Kalau masih kosong, beri tahu user
+   if (availableClasses.length === 0) {
+      Swal.fire('Data Kelas Kosong', 'Tidak ada data kelas di sistem. Silakan tambah kelas dulu di Master Data.', 'error')
+      return
+   }
    
    // Siapkan options untuk SweetAlert Select
    const inputOptions = {}
    availableClasses.forEach(c => {
-      inputOptions[c.idKelas] = `${c.namaKelas} (${c.idKelas})`
+      inputOptions[c.idKelas] = `${c.namaKelas} (${c.prodi || 'Umum'}) - ${c.idKelas}`
    })
 
    Swal.fire({
@@ -330,11 +348,11 @@ const setujui = (camaba) => {
               }
           })
       }
-   }).then((res) => {
+   }).then(async (res) => {
       if(res.isConfirmed) {
          const selectedKelas = res.value
          // Jalankan action Minta Buat NIM + passing parameter ID kelas
-         const newNim = authStore.approveCamaba(camaba.id, selectedKelas)
+         const newNim = await authStore.approveCamaba(camaba.id, selectedKelas)
          
          if(newNim) {
              // 1. Trigger Plugin Pengirim Email Asli Disini!
@@ -383,5 +401,20 @@ const tolak = (id, nama) => {
          Swal.fire('Terhapus', 'Registrasi pendaftar telah dibuang dari sistem.', 'info')
       }
    })
+}
+
+const seedKelas = async () => {
+   try {
+      const res = await fetch('http://localhost:5000/api/master/seed-kelas', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+         Swal.fire('Berhasil!', `${data.message}\nSilakan refresh halaman untuk melihat perubahan.`, 'success')
+         await masterStore.fetchAll()
+      } else {
+         Swal.fire('Error', data.error || 'Gagal generate kelas', 'error')
+      }
+   } catch (e) {
+      Swal.fire('Error', 'Gagal konek ke server', 'error')
+   }
 }
 </script>

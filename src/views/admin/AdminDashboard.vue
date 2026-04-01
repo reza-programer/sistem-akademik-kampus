@@ -18,7 +18,7 @@
             <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
         </div>
         <div class="p-6 flex-1 flex flex-col justify-center items-center">
-            <p class="text-5xl font-bold text-slate-800 mb-2">{{ authStore.mahasiswaDB.length }}</p>
+            <p class="text-5xl font-bold text-slate-800 mb-2">{{ (authStore.mahasiswaDB || []).length }}</p>
             <p class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 flex items-center shadow-sm">
               <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
               Total Terdaftar
@@ -59,7 +59,7 @@
             <svg class="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
         </div>
         <div class="p-6 flex-1 flex flex-col justify-center items-center">
-            <p class="text-5xl font-bold text-amber-600 mb-2">{{ authStore.calonMahasiswa.length }}</p>
+            <p class="text-5xl font-bold text-amber-600 mb-2">{{ (authStore.calonMahasiswa || []).length }}</p>
             <router-link to="/admin/pmb" class="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded border border-amber-200 shadow-sm hover:bg-amber-100 transition whitespace-nowrap">
               Verifikasi Sekarang &rarr;
             </router-link>
@@ -74,7 +74,7 @@
         <button class="text-xs text-primary-600 hover:text-primary-800 font-bold uppercase tracking-wider">Muat Ulang</button>
       </div>
       <div class="p-0">
-         <div v-for="(camaba, i) in authStore.calonMahasiswa.slice(0, 3)" :key="'c-'+i" class="flex items-start px-6 py-4 border-b border-slate-100/50 hover:bg-slate-50 transition">
+         <div v-for="(camaba, i) in (authStore.calonMahasiswa || []).slice(0, 3)" :key="'c-'+i" class="flex items-start px-6 py-4 border-b border-slate-100/50 hover:bg-slate-50 transition">
             <div class="w-2 h-2 rounded-full bg-amber-500 mt-2 mr-4"></div>
             <div>
                <p class="text-sm text-slate-800 font-medium">Calon Mahasiswa <span class="font-bold">{{ camaba.nama }}</span> telah mendaftar PMB.</p>

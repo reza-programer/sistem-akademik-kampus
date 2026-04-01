@@ -1,86 +1,60 @@
-import { defineStore } from 'pinia'
+import { defineStore } from 'pinia';
+import { useAuthStore } from './auth';
+
+const API_URL = 'http://localhost:5000/api';
 
 export const usePresensiStore = defineStore('presensi', {
     state: () => ({
-        // Daftar nama mahasiswa di kelas dummy (SI 2026 01)
-        students: [
-            { nim: '20260001', nama: 'Andi Wijaya' },
-            { nim: '20260002', nama: 'Budi Santoso' },
-            { nim: '20260003', nama: 'Citra Lestari' },
-            { nim: '20260004', nama: 'Dewi Sartika' },
-            { nim: '20260005', nama: 'Eko Prasetyo' }
-        ],
-        // Record Absensi: 
-        // Array per pertemuan. Misal: { pertemuan: 1, tanggal: '2025-03-01', matkul: 'Struktur Data', data: { '20260001': 'Hadir', '20260002': 'Alpa' } }
-        records: JSON.parse(localStorage.getItem('presensi_records')) || [
-            {
-                id: 1,
-                pertemuan: 1,
-                tanggal: '2025-03-01',
-                matkul: 'Struktur Data',
-                data: {
-                    '20260001': 'Hadir',
-                    '20260002': 'Hadir',
-                    '20260003': 'Izin',
-                    '20260004': 'Hadir',
-                    '20260005': 'Sakit'
-                }
-            },
-            {
-                id: 2,
-                pertemuan: 2,
-                tanggal: '2025-03-08',
-                matkul: 'Struktur Data',
-                data: {
-                    '20260001': 'Hadir',
-                    '20260002': 'Sakit',
-                    '20260003': 'Hadir',
-                    '20260004': 'Hadir',
-                    '20260005': 'Hadir'
-                }
-            }
-        ]
+        historyPresensi: [] // Presensi data fetched from backend
     }),
     getters: {
-        getRekapMahasiswa: (state) => (nim) => {
-            // Menghitung % kehadiran untuk mahasiswa tertentu berdasarkan history record
-            const history = state.records.map(r => ({
-                pertemuan: r.pertemuan,
-                tanggal: r.tanggal,
-                matkul: r.matkul,
-                status: r.data[nim] || 'Belum Input'
-            }))
-
-            const hadir = history.filter(h => h.status === 'Hadir').length
-            const total = history.length
-            const persentase = total > 0 ? Math.round((hadir / total) * 100) : 0
-
-            return { history, hadir, total, persentase }
+        getPresensiByJadwal: (state) => {
+            return (idJadwal) => state.historyPresensi.filter(p => p.idJadwal === idJadwal);
         }
     },
     actions: {
-        saveRecord(matkul, pertemuan, tanggal, dataAbsensi) {
-            // Cek apakah pertemuan sudah ada
-            const existingIndex = this.records.findIndex(r => r.matkul === matkul && r.pertemuan === pertemuan)
-
-            const newRecord = {
-                id: Date.now(),
-                pertemuan,
-                tanggal,
-                matkul,
-                data: dataAbsensi
+        async fetchPresensiDosen(idJadwal) {
+            try {
+                const res = await fetch(`${API_URL}/presensi/${idJadwal}`);
+                const data = await res.json();
+                this.historyPresensi = data;
+            } catch (err) {
+                console.error("Gagal load presensi:", err);
             }
-
-            if (existingIndex >= 0) {
-                this.records[existingIndex] = newRecord // Update
-            } else {
-                this.records.push(newRecord) // Insert new
-            }
-
-            this.saveState()
         },
-        saveState() {
-            localStorage.setItem('presensi_records', JSON.stringify(this.records))
+        async bukaSesiPresensi(payload) {
+            try {
+                // Generate secure random Token
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let randomToken = '';
+                for (let i = 0; i < 6; i++) {
+                    randomToken += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+
+                const obj = {
+                    idJadwal: payload.idJadwal,
+                    pertemuan: payload.pertemuan || this.historyPresensi.length + 1,
+                    tanggal: new Date().toISOString().split('T')[0],
+                    metode: payload.metode,
+                    materi: payload.materi,
+                    token: randomToken
+                };
+
+                const res = await fetch(`${API_URL}/presensi/buka`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(obj)
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    await this.fetchPresensiDosen(payload.idJadwal);
+                    return randomToken;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+            return null;
         }
     }
-})
+});

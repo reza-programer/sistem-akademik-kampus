@@ -21,7 +21,7 @@
       <!-- Daftar Kontak (Diurutkan otomatis yang ada riwayat chat) -->
       <div class="flex-1 overflow-y-auto">
         <div 
-           v-for="contact in filteredContacts" 
+           v-for="contact in (filteredContacts || [])" 
            :key="contact.id" 
            @click="selectContact(contact)"
            class="p-4 border-b theme-border hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition select-none flex items-start gap-3 relative"
@@ -49,7 +49,7 @@
            <div v-if="isUnreadFrom(contact)" class="w-2.5 h-2.5 bg-red-500 rounded-full mt-1 shrink-0"></div>
         </div>
         
-        <div v-if="filteredContacts.length === 0" class="p-8 text-center text-sm opacity-50 theme-text">
+        <div v-if="(filteredContacts || []).length === 0" class="p-8 text-center text-sm opacity-50 theme-text">
            Kontak tidak ditemukan.
         </div>
       </div>
@@ -161,13 +161,13 @@ const pesanTeks = ref('')
 
 // Computed List of Contacts for this user (Except themselves)
 const contactsList = computed(() => {
-   return msgStore.contacts.filter(c => c.id !== currentUserIdentifier.value)
+   return (msgStore.contacts || []).filter(c => c.id !== currentUserIdentifier.value)
 })
 
 const filteredContacts = computed(() => {
-   let list = contactsList.value
+   let list = contactsList.value || []
    if(searchQuery.value) {
-       list = list.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()) || c.id.includes(searchQuery.value))
+       list = list.filter(c => c.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) || c.id?.includes(searchQuery.value))
    }
 
    // Sort by latest message date descending (Bubble to top)
@@ -195,7 +195,7 @@ const lastMsg = (contact) => {
 
 const activeMessages = computed(() => {
    if(!selectedContact.value) return []
-   return msgStore.getMessagesWithUser(currentUserIdentifier.value, selectedContact.value.id)
+   return msgStore.getMessagesWithUser(currentUserIdentifier.value, selectedContact.value.id) || []
 })
 
 const selectContact = (contact) => {

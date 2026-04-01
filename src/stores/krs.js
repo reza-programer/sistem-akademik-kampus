@@ -1,147 +1,116 @@
-import { defineStore } from 'pinia'
-import { useAuthStore } from './auth'
-import { useNotificationStore } from './notification'
+import { defineStore } from 'pinia';
+import { useAuthStore } from './auth';
 
-import { useKeuanganStore } from './keuangan'
+const API_URL = 'http://localhost:5000/api';
 
 export const useKrsStore = defineStore('krs', {
     state: () => ({
-        // Kuota SKS maksimal
-        maxSks: 24,
-        // Menyimpan data perwalian berdasarkan NIM user
-        // Format: { '20260001': { status: 'draft', matkul: [] } }
-        krsData: JSON.parse(localStorage.getItem('krs_all_data')) || {}
+        krsList: [],          // Overview of all semesters
+        currentDetails: [],   // Details of the latest KRS
+        selectedMatkul: [],   // Cart for drafting
+        krsData: {},
+        maxSks: 24
     }),
     getters: {
-        currentUserNIM: () => {
-            const authStore = useAuthStore()
-            return authStore.user?.nim || 'default'
+        totalSksSelected: (state) => {
+            return state.selectedMatkul.reduce((acc, current) => acc + current.sks, 0);
         },
-        currentKrs: (state) => {
-            const nim = useKrsStore().currentUserNIM
-            if (!state.krsData[nim]) {
-                return { status: 'draft', matkul: [] }
-            }
-            return state.krsData[nim]
-        },
-        status: (state) => {
-            return state.currentKrs.status
-        },
-        selectedMatkul: (state) => {
-            return state.currentKrs.matkul
-        },
-        totalSks: (state) => {
-            return state.currentKrs.matkul.reduce((total, mk) => total + mk.sks, 0)
-        },
-        totalBiaya() {
-            return this.currentKrs.matkul.reduce((total, mk) => total + (mk.biaya || 0), 0)
-        },
-        isDraft: (state) => state.currentKrs.status === 'draft',
-        isPending: (state) => state.currentKrs.status === 'pending',
-        isApproved: (state) => state.currentKrs.status === 'approved'
+        riwayatKrs: (state) => {
+            return state.krsList;
+        }
     },
     actions: {
-        _initUserRecord() {
-            const nim = this.currentUserNIM
-            if (!this.krsData[nim]) {
-                this.krsData[nim] = { status: 'draft', matkul: [] }
-            }
-            return nim
-        },
-        addMatkul(matkul) {
-            const nim = this._initUserRecord()
-
-            if (this.krsData[nim].status !== 'draft' && this.krsData[nim].status !== 'rejected') return false
-
-            // Check if already exist
-            const exists = this.krsData[nim].matkul.find(m => m.kode === matkul.kode)
-            if (exists) return false
-
-            // Check SKS limit
-            const currentTotal = this.krsData[nim].matkul.reduce((acc, m) => acc + m.sks, 0)
-            if (currentTotal + matkul.sks > this.maxSks) return false
-
-            this.krsData[nim].matkul.push(matkul)
-            this.saveState()
-            return true
-        },
-        removeMatkul(kode) {
-            const nim = this._initUserRecord()
-            if (this.krsData[nim].status !== 'draft' && this.krsData[nim].status !== 'rejected') return false
-
-            this.krsData[nim].matkul = this.krsData[nim].matkul.filter(m => m.kode !== kode)
-            this.saveState()
-            return true
-        },
-        ajukanKRS() {
-            const nim = this._initUserRecord()
-            if (this.krsData[nim].matkul.length === 0) return false
-            this.krsData[nim].status = 'pending'
-            this.saveState()
-
-            // Trigger Notifikasi ke Dosen
-            const notifStore = useNotificationStore()
-            notifStore.addNotification('dosen', {
-                title: 'Pengajuan KRS Baru',
-                message: `Mahasiswa dengan NIM ${nim} telah mengajukan KRS untuk ditinjau.`,
-                type: 'warning'
-            })
-
-            return true
-        },
         approveKRSFromDosen(nim) {
-            if (!this.krsData[nim]) return
-            this.krsData[nim].status = 'approved'
-            this.saveState()
-
-            // Generate tagihan ke keuangan store
-            const keuanganStore = useKeuanganStore()
-            const matkul = this.krsData[nim].matkul
-            const totalBiaya = matkul.reduce((total, mk) => total + (mk.biaya || 0), 0)
-            if (totalBiaya > 0) {
-                keuanganStore.addTagihanFromKRS(nim, totalBiaya, matkul)
-            }
-
-            // Trigger Notifikasi ke Mahasiswa
-            const notifStore = useNotificationStore()
-            notifStore.addNotification('mahasiswa', {
-                title: 'KRS Disetujui',
-                message: `Pengajuan KRS Anda telah disetujui. Total biaya studi: Rp ${totalBiaya.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')},-`,
-                type: 'success'
-            })
+            if (!nim) return;
+            if (!this.krsData) this.krsData = {};
+            if (!this.krsData[nim]) return;
+            this.krsData = {
+                ...this.krsData,
+                [nim]: {
+                    ...this.krsData[nim],
+                    status: 'approved'
+                }
+            };
         },
         rejectKRSFromDosen(nim) {
-            if (!this.krsData[nim]) return
-            this.krsData[nim].status = 'rejected'
-            this.saveState()
-
-            // Trigger Notifikasi ke Mahasiswa
-            const notifStore = useNotificationStore()
-            notifStore.addNotification('mahasiswa', {
-                title: 'KRS Ditolak',
-                message: `Pengajuan KRS Anda ditolak oleh Dosen Wali. Silakan merevisi pilihan Anda.`,
-                type: 'info'
-            })
-        },
-        resetKRS() { // Reset KRS Diri Sendiri (Sisi Mahasiswa ketika revise)
-            const nim = this._initUserRecord()
-            this.krsData[nim].status = 'draft'
-            this.krsData[nim].matkul = []
-            this.saveState()
-        },
-        setNilai(nim, kodeMatkul, nilaiAkhir, grade, bobot) {
-            if (this.krsData[nim] && this.krsData[nim].matkul) {
-                const mk = this.krsData[nim].matkul.find(m => m.kode === kodeMatkul)
-                if (mk) {
-                    mk.nilaiAkhir = nilaiAkhir
-                    mk.grade = grade
-                    mk.bobot = bobot
-                    this.saveState()
+            if (!nim) return;
+            if (!this.krsData) this.krsData = {};
+            if (!this.krsData[nim]) return;
+            this.krsData = {
+                ...this.krsData,
+                [nim]: {
+                    ...this.krsData[nim],
+                    status: 'rejected'
                 }
+            };
+        },
+        async fetchKrsMahasiswa() {
+            try {
+                const auth = useAuthStore();
+                if (!auth.user || auth.user.role !== 'mahasiswa') return;
+                
+                const res = await fetch(`${API_URL}/krs/${auth.user.username}`);
+                const data = await res.json();
+                
+                if (data.krs) {
+                    this.krsList = data.krs;
+                    this.currentDetails = data.currentDetails;
+                }
+            } catch (err) {
+                console.error("Gagal load KRS:", err);
             }
         },
-        saveState() {
-            localStorage.setItem('krs_all_data', JSON.stringify(this.krsData))
+        addToKrs(jadwalLengkap) {
+            const exists = this.selectedMatkul.find(item => item.idJadwal === jadwalLengkap.idJadwal);
+            if (!exists) {
+                this.selectedMatkul.push(jadwalLengkap);
+            }
+        },
+        removeFromKrs(idJadwal) {
+            this.selectedMatkul = this.selectedMatkul.filter(item => item.idJadwal !== idJadwal);
+        },
+        async submitKRS() {
+            try {
+                const auth = useAuthStore();
+                if (!auth.user) return false;
+
+                const jadwal_ids = this.selectedMatkul.map(j => j.idJadwal);
+                
+                const res = await fetch(`${API_URL}/krs/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nim: auth.user.username,
+                        semester: 1, // Example, should be dynamic based on user profile
+                        total_sks: this.totalSksSelected,
+                        jadwal_ids
+                    })
+                });
+                
+                const data = await res.json();
+                if (data.success) {
+                    // Automatically generate bill
+                    await fetch(`${API_URL}/tagihan`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            nim: auth.user.username,
+                            jenis_tagihan: 'SPP / UKT Semester ' + 1,
+                            nominal: 5000000 + (this.totalSksSelected * 150000), // example formula
+                            tenggat_waktu: new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0, 19).replace('T', ' '),
+                            order_id: 'TRX-UKT-' + Date.now()
+                        })
+                    });
+
+                    this.selectedMatkul = [];
+                    await this.fetchKrsMahasiswa();
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
         }
     }
-})
+});

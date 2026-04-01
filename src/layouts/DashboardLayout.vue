@@ -31,7 +31,7 @@
         <div class="p-4 border-t border-white border-opacity-10">
           <div class="text-sm text-slate-400 mb-2">Login sebagai:</div>
           <div class="font-medium truncate">{{ authStore.user?.name }}</div>
-          <div class="text-sm truncate opacity-70 mb-4">{{ authStore.role.toUpperCase() }}</div>
+          <div class="text-sm truncate opacity-70 mb-4">{{ (authStore.role || '').toUpperCase() }}</div>
           <button @click="handleLogout" class="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-red-500 hover:bg-red-600 rounded-lg transition">
             <span>Logout</span>
           </button>
@@ -66,7 +66,7 @@
       <div class="p-4 border-t border-white border-opacity-10">
         <div class="text-sm text-slate-400 mb-2">Login sebagai:</div>
         <div class="font-medium truncate">{{ authStore.user?.name }}</div>
-        <div class="text-sm truncate opacity-70 mb-4">{{ authStore.role.toUpperCase() }}</div>
+        <div class="text-sm truncate opacity-70 mb-4">{{ (authStore.role || '').toUpperCase() }}</div>
         <button 
           @click="handleLogout"
           class="w-full flex items-center justify-center space-x-2 py-2 px-4 bg-red-500 hover:bg-red-600 rounded-lg transition"
@@ -84,7 +84,7 @@
           SIAKAD
         </div>
         <div class="hidden md:block theme-text opacity-70 font-medium">
-          Dashboard {{ authStore.role.charAt(0).toUpperCase() + authStore.role.slice(1) }}
+          Dashboard {{ ((authStore.role || '').charAt(0).toUpperCase() + (authStore.role || '').slice(1)) }}
         </div>
         
         <div class="flex items-center space-x-6">
@@ -156,8 +156,8 @@
               {{ authStore.user?.name?.charAt(0) }}
             </div>
             <div class="hidden md:block text-sm">
-              <div class="font-bold theme-text group-hover:text-primary-600 transition">{{ authStore.user?.name?.split(' ')[0] || authStore.role.toUpperCase() }}</div>
-              <div class="text-[11px] theme-text opacity-60 uppercase font-semibold tracking-wide">{{ authStore.role }}</div>
+              <div class="font-bold theme-text group-hover:text-primary-600 transition">{{ authStore.user?.name?.split(' ')[0] || (authStore.role || '').toUpperCase() }}</div>
+              <div class="text-[11px] theme-text opacity-60 uppercase font-semibold tracking-wide">{{ authStore.role || '' }}</div>
             </div>
           </router-link>
         </div>
